@@ -12,11 +12,8 @@ public class LocationV1 {
     private BigDecimal lon;
     private BigDecimal lat;
 
-
-
-
     public void setLat(String lat) {
-        setLon( lat == null ? null : new BigDecimal(lat) );
+        setLat( lat == null ? null : new BigDecimal(lat) );
     }
 
     public void setLat(BigDecimal lat) {

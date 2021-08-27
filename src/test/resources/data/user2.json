@@ -1,0 +1,17 @@
+{
+  "user": "user2",
+  "email": "x@y2.nl",
+  "confirmationcode": "123456",
+  "password": "absdefgh",
+  "badlogins": 0,
+  "locations": [
+    {
+      "id": "ID2",
+      "name": "Coffeeshop Missouri",
+      "address": "Hoogbrugstraat 31, 6221 CN Maastricht, Netherlands",
+      "latlon": "50.847238,5.6983075",
+      "www": "https://www.dutch-coffeeshops.com/coffeeshop-adresses/coffeeshops-maastricht/coffeeshop-missouri/",
+      "openingtimes": ["5:18-24","6:10-24", "7:10-20"]
+    }
+  ]
+}

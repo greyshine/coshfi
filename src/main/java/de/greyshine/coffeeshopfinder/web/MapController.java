@@ -2,7 +2,7 @@ package de.greyshine.coffeeshopfinder.web;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -12,7 +12,8 @@ import java.util.List;
 @Slf4j
 public class MapController {
 
-    @GetMapping( value = "/api/v1/locations", produces = MediaType.APPLICATION_JSON_VALUE)
+    // /api/v1/locations
+    @PostMapping( value = "/test", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<LocationV1> locations() {
 
         final ArrayList<LocationV1> results = new ArrayList<>();
@@ -24,9 +25,9 @@ public class MapController {
         results.add(l1);
 
         final LocationV1 l2= new LocationV1();
-        l1.setName("LOC:OceanFront");
-        l1.setLat( "52.098444" );
-        l1.setLon( "4.263856" );
+        l2.setName("LOC:OceanFront");
+        l2.setLat( "52.098444" );
+        l2.setLon( "4.263856" );
         results.add(l2);
 
         return results;

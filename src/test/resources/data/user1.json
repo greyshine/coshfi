@@ -1,0 +1,16 @@
+{
+  "user": "user1",
+  "email": "x@y.nl",
+  "confirmationcode": "123456",
+  "password": "absdefgh",
+  "badlogins": 0,
+  "locations": [
+    {
+      "id": "ID1",
+      "name": "Kronkel, Venlo",
+      "address": "Vlaamsegas 26-36, 6511 HR Nijmegen, Netherlands",
+      "latlon": "51.8437756,5.8641647",
+      "www": "https://www.kronkel.nl"
+    }
+  ]
+}
