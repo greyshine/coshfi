@@ -1,77 +1,92 @@
-div {
-  background-color: #183100;
-  color: #A9D24E;
-}
+$spaceSm: 5px;
+$space: 15px;
+$spaceLg: 30px;
+$colorFg: #A9D24E;
+$colorBg: #183100;
+$colorError: #BD0000;
 
 body {
   border: 0; margin: 0; padding: 0;
   font-family: 'Lato';
-  background-color: #183100;
-  color: #A9D24E;
+  background-color: $colorBg;
+  color: $colorFg;
 }
 
+div {
+  background-color: $colorBg;
+  color: $colorFg;
+}
 
 input {
-  margin: 0px 5px 5px;
+  margin: 0px $spaceSm $spaceSm;
 }
 
 textarea {
-  margin: 0px 5px 5px;
+  margin: 0px $spaceSm $spaceSm;
 }
 
 button {
-  margin: 0px 5px 5px;
+  margin: 0px $spaceSm $spaceSm;
 }
 
 input.error {
-  border: 2px red solid;
+  border: 2px $colorError solid;
 }
 
 textarea.error {
-  border: 2px red solid;
+  border: 2px $colorError solid;
+}
+
+input.error::placeholder {
+  color: $colorError;
+}
+
+textarea.error::placeholder {
+  color: $colorError;
 }
 
 .spaceTop {
-  margin-top: 15px;
+  margin-top: $spaceLg;
 }
 
 .spaceRight {
-  margin-right: 15px;
+  margin-right: $spaceLg;
 }
 
 .spaceBottom {
-  margin-bottom: 15px;
+  margin-bottom: $spaceLg;
 }
 
 .spaceLeft {
-  margin-left: 15px;
-}
-
-.spaceTopLeft {
-  margin-top: 15px;
-  margin-left: 15px;
+  margin-left: $spaceLg;
 }
 
 .spaceTopRight {
-  margin-top: 15px;
-  margin-right: 15px;
+  margin-top: $spaceLg;
+  margin-right: $spaceLg;
+}
+
+.spaceTopLeft {
+  margin-top: $spaceLg;
+  margin-left: $spaceLg;
 }
 
 .spaceTopRightLeft {
-  margin-top: 15px;
-  margin-right: 15px;
-  margin-left: 15px;
+  margin-top: $spaceLg;
+  margin-right: $spaceLg;
+  margin-left: $spaceLg;
 }
 
 .spaceTopRightBottomLeft {
-  margin-top: 15px;
-  margin-right: 15px;
-  margin-bottom: 15px;
-  margin-left: 15px;
+  margin: $spaceLg;
 }
 
 .spaceBottomLeft {
-  margin-bottom: 15px;
-  margin-left: 15px;
+  margin-bottom: $spaceLg;
+  margin-left: $spaceLg;
+}
+
+.formFieldDescription {
+  margin: $spaceLg $space $spaceSm;
 }
 

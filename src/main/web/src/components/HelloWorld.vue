@@ -8,10 +8,6 @@
         https://www.countryflags.com/image-overview/<br/>
         TODO: https://www.countryflags.com/de/produkt/3d-png-128-flaggen-paket/
       </li>
-      <li>https://regenrek.com/posts/how-to-create-an-animated-vue-sidebar-menu-with-vue-observable</li>
-      <li>https://markus.oberlehner.net/blog/using-location-data-with-vue-and-open-street-map/</li>
-      <li>Maps with Vuejs, https://ej2.syncfusion.com/vue/documentation/maps/getting-started/</li>
-      <li>https://blog.logrocket.com/building-an-interactive-map-with-vue-and-leaflet/</li>
       <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
       <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
       <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>

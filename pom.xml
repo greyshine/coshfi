@@ -20,6 +20,7 @@
         <!-- 2021-05 -->
         <frontend-maven-plugin.version>1.12.0</frontend-maven-plugin.version>
         <npm-node.version>v12.19.0</npm-node.version>
+        <apache-commons-io.version>2.11.0</apache-commons-io.version>
     </properties>
 
     <dependencies>
@@ -50,6 +51,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${apache-commons-io.version}</version>
         </dependency>
 
         <dependency>

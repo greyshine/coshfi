@@ -2,37 +2,42 @@
 
   <div>
 
-    <h1>Register</h1>
+    <h1 v-text="texts.page.register.h1" />
     <hr/>
 
-    <div class="spaceBottomLeft error" :style="{display: message != null ? 'inline' : 'none'}">
-      {{message}}
+    <Messages ref="messages" />
+
+    <div ref="form" id="form">
+
+      <div>
+        <p class="formFieldDescription" v-html="texts.form.register.name" :class="{error: errorName}"/>
+        <b-form-input v-model="name" :placeholder="texts.form.register.name_placeholder" @blur="validate('name')" :class="{error: errorName}"/>
+
+        <p class="formFieldDescription" v-html="texts.form.register.login" :class="{error: errorLogin}"/>
+        <b-form-input v-model="login" :placeholder="texts.form.register.login_placeholder" @blur="validate('login')" :class="{error: errorLogin}"/>
+
+        <p class="formFieldDescription" v-html="texts.form.register.password" />
+        <b-form-input type="password" v-model="password" :placeholder="texts.form.register.password_placeholder" @blur="validate('password')" :class="{error: errorPassword}" />
+        <b-form-input type="password" v-model="password2" :placeholder="texts.form.register.password2_placeholder" @blur="validate('password2')" :class="{error: errorPassword2}" />
+
+        <p class="formFieldDescription" v-html="texts.form.register.email" :class="{error: errorEmail}"/>
+        <b-form-input type="email" v-model="email" :placeholder="texts.form.register.email_placeholder" @blur="validate('email')" :class="{error: errorEmail}"/>
+      </div>
+
+      <div>
+        <p class="spaceTopLeft" v-html="texts.form.register.preSubmitInfo" />
+      </div>
+
+      <div>
+        <b-button @click="submit" @mouseover="validate" :disabled="disableSubmit" class="spaceTop">Register</b-button>
+        <!--b-button @click="showConfirmation">ShowConfirmation</b-button-->
+      </div>
     </div>
 
-    <div>
-      <b-form-input v-model="login" @blur="validate" placeholder="Enter your login"></b-form-input>
-
-      <b-form-input type="password" v-model="password" placeholder="Enter your password" class="spaceTop"></b-form-input>
-      <b-form-input type="password" v-model="password2" placeholder="Repeat password"></b-form-input>
-
-      <b-form-input v-model="name" placeholder="Name / legal name" class="spaceTop"></b-form-input>
-      <b-form-input v-model="additionalLine" placeholder="additional line"></b-form-input>
-      <b-form-input v-model="streetno" placeholder="Street + Number / Postbox"></b-form-input>
-      <b-form-input v-model="zipcity" placeholder="Zip + City"></b-form-input>
-      <b-form-input v-model="country" placeholder="country"></b-form-input>
-
-      <b-form-input type="email" v-model="email" placeholder="Enter your email" class="spaceTop"></b-form-input>
-    </div>
-
-    <div>
-      <p class="spaceTopLeft">
-        We will send you an email with a confirmation code. Click the link or paste the url in order to confirm your
-        registration.
-      </p>
-    </div>
-
-    <div>
-      <b-button @click="submit" @mouseover="validate" :disabled="disableSubmit" class="spaceTop">Register</b-button>
+    <div ref="confirmation" id="confirmation">
+      <div>
+        <p v-html="texts.page.register.confirmation" />
+      </div>
     </div>
   </div>
 
@@ -41,104 +46,153 @@
 <script>
 import axios from 'axios'
 import utils from '@/assets/utils.js'
+import lang from '@/assets/lang.js'
+
+import Messages from '@/components/Messages.vue'
 
 export default {
 
+  components: {
+    Messages
+  },
+
   data: ()=>({
-    message: null,
-
-    login: null,
-
-    password: null,
-    password2: null,
 
     name: null,
+    errorName: false,
+    login: null,
+    errorLogin: false,
 
-    additionalLine: null,
-    streetno: null,
-    zipcity: null,
-    country: null,
+    password: null,
+    errorPassword: false,
+    password2: null,
+    errorPassword2: false,
 
     email: null,
+    errorEmail: false,
 
-    disableSubmit: true
+    disableSubmit: true,
+
+    texts: lang.getTexts(),
+
+    error: {
+      errorPassword: ''
+    }
   }),
-
-  mount() {
-    this.validate();
-  },
 
   methods: {
 
-    validate() {
+    validate(field) {
 
-      let v = true;
-      let message = '';
+      field = typeof field != 'string' ? null : field;
+      console.log('validate()', field, field == null);
 
-      this.login = utils.trimToNull(this.login);
-
-      this.password = utils.trimToNull(this.password);
-      this.password2 = utils.trimToNull(this.password2);
-
-      this.name = utils.trimToNull(this.name);
-
-      this.additionalLine  = utils.trimToNull(this.additionalLine);
-      this.streetno = utils.trimToNull(this.streetno);
-
-      this.zipcity = utils.trimToNull(this.zipcity);
-      this.country = utils.trimToNull(this.country);
-
-      this.email = utils.trimToNull(this.email);
-
-      if (utils.isBlank(this.login)) {
-        v = false;
-        message += 'Login is blank\n';
+      if ( field != null ) {
+        this.$refs.messages.clear( field ); // leave other error messages as they are
+        // leave this.disableSubmit as it is. Only thing can happen is that the state becomes false due to one failre
+      } else {
+        this.$refs.messages.clear(); // will be reset on error
+        this.disableSubmit = false;
       }
 
-      if (utils.isBlank(this.name)) {
-        v = false;
-        message = 'Name is blank\n';
+      if (field == null || 'name'===field) {
+
+        this.name = utils.trimToNull(this.name);
+        this.errorName = false;
+
+        if (!utils.matches('[a-zA-Z0-9].+', this.name)) {
+          this.errorName = true;
+          this.$refs.messages.error(this.texts.form.register.name_error);
+          this.disableSubmit = true;
+        }
       }
 
-      if (utils.isBlank(this.password)) {
-        v = false;
-        message = 'Bad password\n';
+      if (field == null || 'login'===field) {
+
+        this.login = utils.trimToNull(this.login);
+        this.errorLogin = false;
+
+        if (!utils.matches('[a-zA-Z0-9].+', this.login)) {
+          this.errorLogin = true;
+          this.$refs.messages.error(this.texts.form.register.login_error);
+          this.disableSubmit = true;
+        }
       }
 
-      if (v == true && this.password !== this.password2) {
-        v = false;
-        message = 'Bad password repeat\n';
+      if (field == null || 'password'==field) {
+
+        this.password = utils.trimToNull(this.password);
+        this.errorPassword = false;
+
+        if (utils.isBlank(this.password)) {
+
+          this.errorPassword = true;
+          this.$refs.messages.error(this.texts.form.register.password_error);
+          this.disableSubmit = true;
+
+        } else {
+
+          utils.validateRemote( { 'global.password': this.password }, ()=>{
+            this.errorPassword = true;
+            this.$refs.messages.error(this.texts.form.register.password_error);
+            this.disableSubmit = true;
+          } );
+        }
       }
 
-      if (utils.isBlank(this.email)) {
-        v = false;
-        message = 'Bad email\n';
+      if (field == null || 'password2'==field) {
+
+        this.password2 = utils.trimToNull(this.password2);
+        this.errorPassword2 = false;
+
+        if ( this.password2 == null || this.password2 !== this.password ) {
+          this.errorPassword2 = true;
+          this.$refs.messages.error(this.texts.form.register.password2_error);
+          this.disableSubmit = true;
+        }
       }
 
-      //this.disableSubmit = !v;
-      this.disableSubmit = false;
-      this.message = utils.trimToNull( message );
+      if ( field==null || 'email'===field ) {
 
-      return v;
+        this.email = utils.trimToNull(this.email);
+        this.errorEmail = false;
+
+        if (utils.isBlank(this.email)) {
+          this.errorEmail = true;
+          this.$refs.messages.error(this.texts.form.register.email_error);
+          this.disableSubmit = true;
+        }
+      }
+
+      console.log('disableSubmit', this.disableSubmit);
+      if ( this.field == null && this.disableSubmit == false) {
+        this.$refs.messages.clear();
+      }
     },
 
     submit() {
 
-      if ( !this.validate() ) {
+      console.log('submit()');
+
+      this.validate()
+
+      if ( this.disableSubmit ) {
+        console.log('validation failure.');
         return;
       }
 
       const requestBody = {
+        login: utils.trimToNull(this.login),
+        password: utils.trimToNull(this.password),
         name: utils.trimToNull(this.name),
         email: utils.trimToNull(this.email),
-        address: [],
-        password: utils.trimToNull(this.password),
       };
 
       axios.post('/api/register', requestBody)
           .then(
               response => {
                 console.log('ok', response);
+                this.showConfirmation();
               },
               error => {
                 console.log('error', error);
@@ -146,6 +200,11 @@ export default {
                 console.log('response', error.response);
               }
           );
+    },
+
+    showConfirmation() {
+      this.$refs.form.style.display='none';
+      this.$refs.confirmation.style.display='inline';
     }
   }
 }
@@ -154,12 +213,8 @@ export default {
 
 <style scoped lang="scss">
 
-div {
-
-  .error {
-    color: red;
-  }
-
+div#confirmation {
+  display: none;
 }
 
 </style>
