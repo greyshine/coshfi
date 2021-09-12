@@ -1,0 +1,7 @@
+server.ssl.enabled=true
+server.ssl.key-store-type=PKCS12
+server.ssl.key-store=file:coffeeshopfinder.p12
+server.ssl.key-store-password=
+server.ssl.key-alias=coffeeshopfinder
+# when sslforfree http://.well-known/pki-validation/*
+# server.sslforfree.wellKnownFile=2DF779772F85D9782763CB3448A70201.txt

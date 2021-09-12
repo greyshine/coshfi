@@ -26,7 +26,8 @@ import java.time.format.DateTimeFormatter;
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @PropertySources({
         @PropertySource("classpath:application.properties"),
-        @PropertySource(value="file:ssl.properties", ignoreResourceNotFound = true)
+        @PropertySource(value = "file:ssl.properties", ignoreResourceNotFound = true),
+        @PropertySource(value = "file:email.properties", ignoreResourceNotFound = true)
 })
 public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEvent> {
 

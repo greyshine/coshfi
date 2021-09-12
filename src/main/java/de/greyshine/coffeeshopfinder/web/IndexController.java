@@ -41,7 +41,7 @@ public class IndexController {
             final File file = Utils.getFile(new File(sslForFreeName));
             log.info("loading sslForFree-file: {}", file);
 
-            sslForFreeContent = Utils.loadString(file);
+            sslForFreeContent = Utils.readString(file);
             Assert.isTrue(!sslForFreeContent.isEmpty(), "no content in " + Utils.getFile(file));
             log.debug("loaded sslForFree-file successfully:\n{}", sslForFreeContent);
         }

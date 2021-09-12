@@ -1,0 +1,7 @@
+email.active=true
+email.templateDir=src/main/email-templates
+email.host=smtp.web.de
+email.port=587
+email.username=coffeeshopfinder@web.de
+email.sender=coffeeshopfinder@web.de
+email.password=

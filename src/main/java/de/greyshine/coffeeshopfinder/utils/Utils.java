@@ -7,10 +7,7 @@ import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -144,28 +141,10 @@ public abstract class Utils {
         return "TODO: get IP " + request;
     }
 
-    public static String loadString(File file) throws IOException {
-        return loadString(file, null);
-    }
-
-    public static String loadString(File file, Charset charset) throws IOException {
-
-        Assert.notNull(file, "File is null");
-        Assert.isTrue(file.isFile() && file.canRead(), "File is not accessible as file");
-
-        charset = charset != null ? charset : StandardCharsets.UTF_8;
-
-        final StringBuilder sb = new StringBuilder();
-
-        try (FileReader fr = new FileReader(file, charset)) {
-            while (fr.ready()) {
-                sb.append((char) fr.read());
-            }
-        }
-
-        return sb.toString();
-    }
-
+    /**
+     * @param file to be converted
+     * @return the canonical file or the absolut file or null when passed null
+     */
     public static File getFile(File file) {
         try {
             return file == null ? null : file.getCanonicalFile();
@@ -187,7 +166,31 @@ public abstract class Utils {
         s1 = trimToNull(s1);
         s2 = trimToNull(s2);
 
-        return s1==null && s2==null ? isNullEquals : StringUtils.equals(s1, s2);
+        return s1 == null && s2 == null ? isNullEquals : StringUtils.equals(s1, s2);
+    }
+
+    public static Exception executeSafe(Runnable2 runnable) {
+
+        if (runnable == null) {
+            return null;
+        }
+
+        try {
+            runnable.run();
+            return null;
+        } catch (Exception e) {
+            return e;
+        }
+    }
+
+    public static byte[] read(File file) throws IOException {
+        try (InputStream is = new FileInputStream(file)) {
+            return read(is);
+        }
+    }
+
+    public static byte[] read(InputStream is) throws IOException {
+        return is.readAllBytes();
     }
 
     @FunctionalInterface

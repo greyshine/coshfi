@@ -3,22 +3,26 @@
 
     <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <Pattern>%d{DD.MM.YYYY HH:mm:ss.SSS} %blue(%-5level) %magenta(%logger{120}) - %msg%n</Pattern>
+            <Pattern>%d{DD.MM.YYYY HH:mm:ss.SSS} %blue(%-5level) %magenta(%logger{120}):%magenta(%line) %blue(-)
+                %msg%n
+            </Pattern>
         </encoder>
     </appender>
 
     <logger name="org.springframework" level="ERROR"/>
 
-    <logger name="org.apache.catalina.core" level="ERROR" />
+    <logger name="org.apache.catalina.core" level="ERROR"/>
 
-    <logger name="org.apache.catalina.core.ContainerBase" level="FATAL" />
+    <logger name="org.apache.catalina.core.ContainerBase" level="FATAL"/>
 
-    <logger name="de.greyshine" level="DEBUG" additivity="false" >
+    <logger name="de.greyshine" level="DEBUG" additivity="false">
         <appender-ref ref="consoleAppender"/>
     </logger>
 
+    <logger name="de.greyshine.coffeeshopfinder.service.EmailService" level="DEBUG" additivity="false"/>
+
     <root>
-        <level value="INFO" />
-        <appender-ref ref="consoleAppender" />
+        <level value="INFO"/>
+        <appender-ref ref="consoleAppender"/>
     </root>
 </configuration>

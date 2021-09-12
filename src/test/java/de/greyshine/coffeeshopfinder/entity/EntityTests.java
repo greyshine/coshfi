@@ -1,21 +1,18 @@
 package de.greyshine.coffeeshopfinder.entity;
 
-import de.greyshine.coffeeshopfinder.utils.Latlon;
 import de.greyshine.coffeeshopfinder.service.JsonService;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.Assert;
 
-import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-@SpringBootTest(args ={"--datadir=target/test-datadir"})
+@SpringBootTest(args = {"--datadir=target/test-datadir"})
 @Slf4j
 public class EntityTests {
 
@@ -30,12 +27,12 @@ public class EntityTests {
 
         final File file = new File("target/test-datadir").getCanonicalFile();
 
-        if ( !file.isDirectory() ) {
+        if (!file.isDirectory()) {
             file.mkdirs();
-            Assert.isTrue( file.isDirectory(), "Root directory is not accessible: "+ file.getAbsolutePath() );
+            Assert.isTrue(file.isDirectory(), "Root directory is not accessible: " + file.getAbsolutePath());
         }
 
-        log.info( "Root dir: {}", file.getAbsolutePath() );
+        log.info("Root dir: {}", file.getAbsolutePath());
     }
 
     @Test
@@ -51,10 +48,10 @@ public class EntityTests {
         log.info("persisted={}", re);
         log.info("id={}", re.getId());
 
-        final List<RegistrationEntity> res = registrationCrudService.iterate( CrudService.Sync.NONE, registrationEntity -> {
-            log.info( "{}", registrationEntity );
+        final List<RegistrationEntity> res = registrationCrudService.iterate(CrudService.Sync.NONE, registrationEntity -> {
+            log.info("{}", registrationEntity);
             return null;
-        } );
+        });
 
     }
 

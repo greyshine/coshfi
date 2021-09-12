@@ -8,6 +8,11 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 public class UtilsTests {
 
+    public static final String[] PROGRAM_ARGS = {
+            "--datadir=target/test-datadir",
+            "--email-template-dir=src/main/email-templates"
+    };
+
     @Test
     public void testLatlon() {
 
