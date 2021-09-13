@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Slf4j
-public class Location {
+public class Location extends Entity {
 
     @NotBlank(message = "id is mandatory")
     private String id;
@@ -19,7 +19,13 @@ public class Location {
      * ; separated lines of an Address
      */
     private String address;
+    private String phone;
     private String www;
+    private String instagram;
+    private String twitter;
+    private String tiktok;
+    private String facebook;
+
     private String email;
     private String description;
 
@@ -28,12 +34,11 @@ public class Location {
     @NotNull
     private EType type;
 
+    private String openingtimes;
 
     public enum EType {
-
         Shop,
         Bar,
         Pharmacy,
-
     }
 }

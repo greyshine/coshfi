@@ -8,15 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-
-
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Slf4j
 public abstract class CrudService<T extends Entity> {
@@ -193,8 +188,13 @@ public abstract class CrudService<T extends Entity> {
             return supplier.get();
         }
 
-        synchronized ( syncObject ) {
+        synchronized (syncObject) {
             return supplier.get();
         }
+    }
+
+    @SneakyThrows
+    public String toString(T item) {
+        return jsonService.serialize(item);
     }
 }

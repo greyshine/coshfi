@@ -2,16 +2,14 @@ package de.greyshine.coffeeshopfinder.utils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import de.greyshine.coffeeshopfinder.utils.validation.LatLonSetOrUnset;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -28,12 +26,12 @@ public class Latlon {
         latlon(s);
     }
 
-    public Latlon latlon(String s) {
+    public static Latlon latlon(String s) {
+
+        final Latlon latlon = new Latlon();
 
         if (s == null || s.trim().isEmpty()) {
-            this.lat = null;
-            this.lon = null;
-            return this;
+            return latlon;
         }
 
         BigDecimal lat, lon;
@@ -47,10 +45,10 @@ public class Latlon {
             throw new IllegalArgumentException("cannot evaluate: \"" + s + "\"");
         }
 
-        this.lat = lat;
-        this.lon = lon;
+        latlon.lat = lat;
+        latlon.lon = lon;
 
-        return this;
+        return latlon;
     }
 
     public Latlon lon(BigDecimal l) {
@@ -59,7 +57,7 @@ public class Latlon {
     }
 
     public Latlon lon(String l) {
-        return lon( l == null ? null : new BigDecimal(l) ) ;
+        return lon(l == null ? null : new BigDecimal(l));
     }
 
     public Latlon lat(BigDecimal l) {
@@ -68,11 +66,11 @@ public class Latlon {
     }
 
     public Latlon lat(String l) {
-        return lat( l == null ? null : new BigDecimal(l) ) ;
+        return lat(l == null ? null : new BigDecimal(l));
     }
 
     public boolean isValid() {
-        return (this.lat == null && this.lon == null) || (this.lat != null && this.lon!=null);
+        return (this.lat == null && this.lon == null) || (this.lat != null && this.lon != null);
     }
 
     public String toJsonString() {
@@ -107,11 +105,11 @@ public class Latlon {
         }
 
         @Override
-        public Latlon deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+        public Latlon deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
 
             final JsonNode node = jsonParser.getCodec().readTree(jsonParser);
 
-            if ( node == null ) {
+            if (node == null) {
                 return null;
             }
 
@@ -120,13 +118,12 @@ public class Latlon {
             final Latlon latlon = new Latlon(value);
 
             if (!latlon.isValid()) {
-                throw new IllegalStateException("Invalid lat/lon: "+ latlon);
+                throw new IllegalStateException("Invalid lat/lon: " + latlon);
             }
 
             return latlon;
         }
     }
-
 
 
 }

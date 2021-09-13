@@ -3,9 +3,6 @@ package de.greyshine.coffeeshopfinder;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-
-import java.util.Collection;
 
 /**
  * https://www.marcobehler.com/guides/spring-security
