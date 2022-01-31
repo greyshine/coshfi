@@ -1,6 +1,8 @@
-package de.greyshine.coffeeshopfinder.entity;
+package de.greyshine.json.crud;
 
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import java.lang.reflect.Field;
@@ -9,13 +11,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @EqualsAndHashCode
-@ToString
 public abstract class Entity {
 
     public static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     @Getter
     @Setter
+    @NotBlank(message = "id is mandatory")
     private String id;
 
     @NotBlank(message = "created is mandatory")

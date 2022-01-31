@@ -1,7 +1,7 @@
 package de.greyshine.coffeeshopfinder.utils.validation;
 
 
-import de.greyshine.coffeeshopfinder.utils.Latlon;
+import de.greyshine.latlon.Latlon;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.ConstraintValidator;

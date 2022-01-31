@@ -1,6 +1,10 @@
 import axios from "axios";
+import L from "leaflet";
 
-const doNothing = function() {};
+const doNothing = function () {
+};
+
+const keyValues = {};
 
 export default {
 
@@ -8,7 +12,46 @@ export default {
      * Intended to do nothing.
      * Invented for validation not to skip compiling due to empty empty methods.
      */
-    void() {},
+    void() {
+        console.log('void');
+    },
+
+    set(key, value = undefined) {
+
+        this.assertString(key);
+
+        if (typeof value != 'undefined') {
+
+            const valueBefore = keyValues[key];
+
+            keyValues[key] = value;
+
+            return valueBefore;
+
+        } else {
+            this.delete(key);
+        }
+    },
+
+    delete(key) {
+        this.assertString(key);
+        //https://stackoverflow.com/a/3455416/845117
+        delete keyValues[key];
+    },
+
+    get(key) {
+        this.assertString(key);
+        return keyValues[key];
+    },
+
+    isSet(key) {
+        this.assertString(key);
+        return typeof keyValues[key] !== 'undefined';
+    },
+
+    test() {
+        console.log('utils test');
+    },
 
     isBlank(value) {
         return this.trimToNull(value) == null;
@@ -26,7 +69,7 @@ export default {
 
         value = value.trim();
 
-        return value.length == 0 ? null : value;
+        return value.length === 0 ? null : value;
     },
 
     matches(regex, text) {
@@ -53,15 +96,59 @@ export default {
                     doNothing(response);
                 },
                 error=>{
-                    if ( typeof handler == 'function' ) {
+                    if (typeof handler == 'function') {
                         handler(error);
                     } else {
                         console.error('no handler declared.', fieldValueObject)
                     }
-            } )
-            .catch( exception=>{
-                console.error( exception );
-            }
-        );
-    }
+                })
+            .catch(exception => {
+                    console.error(exception);
+                }
+            );
+    },
+
+    assertNotNull(value, message = null) {
+        if (value == null) {
+            throw new Error(message == null ? 'value is null.' : message);
+        }
+    },
+
+    assertObject(value, message = null) {
+        if (typeof value !== 'object') {
+            throw new Error(message == null ? 'value is not an object: ' + value : message);
+        }
+    },
+
+    assertString(value, message = null) {
+        if (typeof value != 'string') {
+            throw new Error(message == null ? 'value is not a string: ' + value : message);
+        }
+    },
+
+    assertNumber(value, message = null) {
+        if (typeof value != 'number') {
+            throw new Error(message == null ? 'value is not a number: ' + value : message);
+        }
+    },
+
+    assertFunction(value, message = null) {
+        if (typeof value !== 'function') {
+            throw new Error(message == null ? 'value is not a function: ' + value : message);
+        }
+    },
+
+
+    AbstractWeedIcon: L.Icon.extend({
+        options: {
+            //shadowUrl: require('../assets/leaf-shadow.png'),
+            iconSize: [38, 45],
+            shadowSize: [50, 64],
+            iconAnchor: [20, 20],
+            shadowAnchor: [0, 0],
+            //popupAnchor:  [-3, -76]
+            popupAnchor: [0, 0]
+        }
+    })
+
 }

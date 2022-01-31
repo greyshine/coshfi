@@ -9,13 +9,46 @@
 </template>
 
 <script>
-
 export default {
 
-  data: ()=>({
-    messages:[],
-    errorIndices:[]
+  data: () => ({
+    messages: [],
+    errorIndices: []
   }),
+
+  mounted() {
+
+    this.$root.bus.$on('messages', (...args) => {
+
+      //console.log('messages.vue', args);
+
+      if (args.length == 0) {
+        console.log('nothing to do, no command defined at position [0]');
+        return;
+      }
+
+      switch (args[0]) {
+
+        case 'clear':
+        case 'clean':
+          this.clear();
+          break;
+
+        case 'add':
+          this.add(args[1], true === args[2]);
+          break;
+
+        case 'delete':
+          this.clear(args[1]);
+          break;
+
+        default:
+          console.log('unknown command', args[0]);
+          return;
+      }
+    });
+
+  },
 
   methods: {
 
@@ -25,19 +58,22 @@ export default {
 
     add(message, error = false) {
 
-      if ( message == null ) { return; }
+      if (message == null) {
+        return;
+      }
       message = ''+ message;
 
       if ( message.trim() === '' ) { return; }
 
       for( let m in this.messages ) {
-        if ( m === message) {
-          console.log('skipping adding existing message', message);
+
+        if (this.messages[m] === message) {
+          //console.log('skipping adding existing message', message);
           return;
         }
       }
 
-      console.log('add', message);
+      //console.log('add', message);
       this.messages.push(message);
 
       if ( error === true ) {
@@ -47,29 +83,32 @@ export default {
 
     clear(field) {
 
-      if ( typeof field == 'number' ) {
+      if (typeof field == 'undefined' || field == null) {
+
+        this.messages = [];
+        this.errorIndices = [];
+
+      } else if (typeof field == 'number') {
 
         if (field <= -1 || field >= this.messages.length) {
           return;
         }
 
+        //console.log('deleted', field);
+
         this.messages.splice(field, 1);
 
-        for(let i=0; i<this.errorIndices.length; i++) {
-          if ( this.errorIndices[i] === field ) {
-            this.errorIndices.splice(i,1);
+        for (let i = 0; i < this.errorIndices.length; i++) {
+          if (this.errorIndices[i] === field) {
+            this.errorIndices.splice(i, 1);
             break;
           }
         }
 
-      } else if ( field != null && typeof field != 'undefined' ) {
+      } else if (field != null) {
 
-        this.clear( this.messages.indexOf( ''+field ) );
-
-      } else {
-
-        this.messages = [];
-        this.errorIndices = [];
+        //console.log('clear field!=null', this.messages.indexOf( ''+field ));
+        this.clear(this.messages.indexOf('' + field));
       }
     }
 

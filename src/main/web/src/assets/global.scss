@@ -1,12 +1,17 @@
 $spaceSm: 5px;
 $space: 15px;
 $spaceLg: 30px;
+$fontSizeSmall: 0.1em;
 $colorFg: #A9D24E;
 $colorBg: #183100;
+$colorSmall: #2C4E22;
 $colorError: #BD0000;
+$colorLink: #A9D24E;
 
 body {
-  border: 0; margin: 0; padding: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
   font-family: 'Lato';
   background-color: $colorBg;
   color: $colorFg;
@@ -15,6 +20,16 @@ body {
 div {
   background-color: $colorBg;
   color: $colorFg;
+}
+
+div.small {
+  fontSizeSmall: $fontSizeSmall;
+  color: $colorSmall;
+}
+
+a {
+  color: $colorLink;
+  cursor: pointer;
 }
 
 input {

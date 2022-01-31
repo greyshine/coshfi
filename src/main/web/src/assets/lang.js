@@ -25,11 +25,11 @@ const texts = {
             name_placeholder: 'Enter your name',
             name_error: 'Name must have a length greater 1 and not be too exotic',
 
-            login: 'Enter a login name you want to user in future. You will be able to create one or several stores for your name:',
+            login: 'Enter a login name you want to use in future. You will be able to create one or several stores for your name:',
             login_placeholder: 'Enter your login',
             login_error: 'Login does not have at least 2 proper characters, as well not too exotic.',
 
-            password: 'Enter a password at least 6 chars. Have an lower- and uppercase letter, a number and at least 1 special char ('+ specialPasswordCharacters +') in there.<br/>Exactly repeat that password in the second field.',
+            password: 'Enter a password at least 6 chars. Have an lower- and uppercase letter, a number and at least 1 special char (' + specialPasswordCharacters + ') in there.<br/>Exactly repeat that password in the second field.',
             password_placeholder: 'Enter your password',
             password2_placeholder: 'Repeat your password',
             password_error: 'Password does not meet requirement',

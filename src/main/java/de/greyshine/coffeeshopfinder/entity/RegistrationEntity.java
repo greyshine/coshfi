@@ -1,12 +1,15 @@
 package de.greyshine.coffeeshopfinder.entity;
 
+import de.greyshine.json.crud.Entity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import javax.validation.constraints.NotBlank;
 
 @Data
-@ToString( callSuper = true )
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class RegistrationEntity extends Entity {
 
     @NotBlank(message = "login is mandatory")

@@ -1,6 +1,6 @@
 package de.greyshine.coffeeshopfinder.entity;
 
-import de.greyshine.coffeeshopfinder.service.JsonService;
+import de.greyshine.json.crud.JsonCrudService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -15,9 +15,6 @@ import java.util.List;
 @SpringBootTest(args = {"--datadir=target/test-datadir"})
 @Slf4j
 public class EntityTests {
-
-    @Autowired
-    private JsonService jsonService;
 
     @Autowired
     private RegistrationCrudService registrationCrudService;
@@ -48,11 +45,11 @@ public class EntityTests {
         log.info("persisted={}", re);
         log.info("id={}", re.getId());
 
-        final List<RegistrationEntity> res = registrationCrudService.iterate(CrudService.Sync.NONE, registrationEntity -> {
-            log.info("{}", registrationEntity);
-            return null;
-        });
-
+        final List<RegistrationEntity> res =
+                registrationCrudService.iterate(RegistrationEntity.class, JsonCrudService.Sync.NONE, registrationEntity -> {
+                    log.info("{}", registrationEntity);
+                    return null;
+                });
     }
 
 

@@ -1,14 +1,15 @@
 <template>
-
+  <div></div>
 </template>
 
 <script>
 
 export default {
 
-  data: ()=>({}),
+  data: () => ({}),
 
-  mount() {},
+  mounted() {
+  },
 
   methods: {}
 }

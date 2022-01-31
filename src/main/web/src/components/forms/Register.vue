@@ -7,36 +7,49 @@
 
     <Messages ref="messages" />
 
-    <div ref="form" id="form">
+    <b-form id="form" validation="form">
 
       <div>
-        <p class="formFieldDescription" v-html="texts.form.register.name" :class="{error: errorName}"/>
-        <b-form-input v-model="name" :placeholder="texts.form.register.name_placeholder" @blur="validate('name')" :class="{error: errorName}"/>
 
-        <p class="formFieldDescription" v-html="texts.form.register.login" :class="{error: errorLogin}"/>
-        <b-form-input v-model="login" :placeholder="texts.form.register.login_placeholder" @blur="validate('login')" :class="{error: errorLogin}"/>
+        <p class="formFieldDescription" validation="name" v-html="texts.form.register.name"/>
+        <b-form-input v-model="name" :placeholder="texts.form.register.name_placeholder" validation="name"/>
 
-        <p class="formFieldDescription" v-html="texts.form.register.password" />
-        <b-form-input type="password" v-model="password" :placeholder="texts.form.register.password_placeholder" @blur="validate('password')" :class="{error: errorPassword}" />
-        <b-form-input type="password" v-model="password2" :placeholder="texts.form.register.password2_placeholder" @blur="validate('password2')" :class="{error: errorPassword2}" />
+        <p class="formFieldDescription" validation="login" v-html="texts.form.register.login"/>
+        <b-form-input v-model="login" :placeholder="texts.form.register.login_placeholder" validation="login"/>
 
-        <p class="formFieldDescription" v-html="texts.form.register.email" :class="{error: errorEmail}"/>
-        <b-form-input type="email" v-model="email" :placeholder="texts.form.register.email_placeholder" @blur="validate('email')" :class="{error: errorEmail}"/>
+        <p class="formFieldDescription" v-html="texts.form.register.password"/>
+        <b-form-input ref="password" v-model="password" :placeholder="texts.form.register.password_placeholder"
+                      type="password" validation="password"/>
+        <b-form-input ref="password2" v-model="password2" :placeholder="texts.form.register.password2_placeholder"
+                      type="password" validation="password2"/>
+
+        <p class="formFieldDescription" validation="email" v-html="texts.form.register.email"/>
+        <b-form-input v-model="email" :placeholder="texts.form.register.email_placeholder" type="email"
+                      validation="email"/>
+
+        <b-textarea name="text" placeholder="for testing..." validation="ta"></b-textarea>
+
+        <b-form-select name="sel" style="width: 50px;">
+          <b-select-option value="A">A</b-select-option>
+          <b-select-option value="B">B</b-select-option>
+        </b-form-select>
+
       </div>
 
       <div>
-        <p class="spaceTopLeft" v-html="texts.form.register.preSubmitInfo" />
+        <p class="spaceTopLeft" v-html="texts.form.register.preSubmitInfo"/>
       </div>
 
       <div>
-        <b-button @click="submit" @mouseover="validate" :disabled="disableSubmit" class="spaceTop">Register</b-button>
-        <!--b-button @click="showConfirmation">ShowConfirmation</b-button-->
+        <b-button class="spaceTop" @click="submit">Register</b-button>
       </div>
-    </div>
 
-    <div ref="confirmation" id="confirmation">
+    </b-form>
+
+    <div ref="confirmation">
+      <i style="color: white;">this is the answer being displayed on successful submit</i>
       <div>
-        <p v-html="texts.page.register.confirmation" />
+        <p v-html="texts.page.register.confirmation"/>
       </div>
     </div>
   </div>
@@ -47,48 +60,75 @@
 import axios from 'axios'
 import utils from '@/assets/utils.js'
 import lang from '@/assets/lang.js'
+import v from '@/assets/validation.js'
 
 import Messages from '@/components/Messages.vue'
 
 export default {
 
+  name: 'Register',
+
   components: {
     Messages
   },
 
-  data: ()=>({
+  data: () => ({
 
     name: null,
-    errorName: false,
     login: null,
-    errorLogin: false,
-
     password: null,
-    errorPassword: false,
     password2: null,
-    errorPassword2: false,
-
     email: null,
-    errorEmail: false,
 
     disableSubmit: true,
 
     texts: lang.getTexts(),
 
-    error: {
-      errorPassword: ''
-    }
   }),
+
+  mounted() {
+
+    v.init(this, {
+      form: {
+        name: {
+          check: /[a-zA-Z0-9]{2,}/g,
+          message: this.texts.form.register.name_error
+        },
+        login: {
+          check: /[a-zA-Z0-9]{2,}/g,
+          message: this.texts.form.register.login_error
+        },
+        password: {
+          check: /[a-zA-Z0-9]{2,}/g,
+          message: this.texts.form.register.password_error
+        },
+        password2: {
+          check: v.checkEqualField('form', 'password'),
+          message: this.texts.form.register.password2_error
+        },
+        email: {
+          check: v.checkEmail,
+          message: this.texts.form.register.email_error
+        },
+      }
+    });
+  },
 
   methods: {
 
-    validate(field) {
+    validate2(event) {
+      if (!v.validate(event)) {
+        this.disableSubmit = true;
+      }
+    },
+
+    validate_x(field) {
 
       field = typeof field != 'string' ? null : field;
       console.log('validate()', field, field == null);
 
-      if ( field != null ) {
-        this.$refs.messages.clear( field ); // leave other error messages as they are
+      if (field != null) {
+        this.$refs.messages.clear(field); // leave other error messages as they are
         // leave this.disableSubmit as it is. Only thing can happen is that the state becomes false due to one failre
       } else {
         this.$refs.messages.clear(); // will be reset on error
@@ -170,14 +210,19 @@ export default {
       }
     },
 
-    submit() {
+    submit(event) {
 
-      console.log('submit()');
+      console.log('submit()', event);
+      const isOk = v.validateSubmit(event);
 
-      this.validate()
+      if (!isOk) {
+        return;
+      }
 
-      if ( this.disableSubmit ) {
-        console.log('validation failure.');
+      const b = true;
+
+      if (b) {
+        console.log('temp EXIT');
         return;
       }
 

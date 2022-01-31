@@ -1,5 +1,7 @@
 package de.greyshine.coffeeshopfinder.utils;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,10 +16,10 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.trimToNull;
+import static org.apache.commons.lang3.StringUtils.*;
 
 @Slf4j
 public abstract class Utils {
@@ -161,6 +163,12 @@ public abstract class Utils {
         return isNotBlank(s) ? s.trim() : supplier == null ? s : supplier.get();
     }
 
+    public static String doIfNotBlank(String arg, Function<String, String> function) {
+
+        Assert.notNull(function, "");
+        return isBlank(arg) ? null : function.apply(arg);
+    }
+
     public static boolean isEqualsTrimmed(String s1, String s2, boolean isNullEquals) {
 
         s1 = trimToNull(s1);
@@ -191,6 +199,70 @@ public abstract class Utils {
 
     public static byte[] read(InputStream is) throws IOException {
         return is.readAllBytes();
+    }
+
+    public static void throwIllegalState(String message) {
+        throw new IllegalStateException(isBlank(message) ? "?" : message);
+    }
+
+    public static <T> T throwNotYetImplemented() {
+        throwIllegalState("not yet implemented");
+        return null;
+    }
+
+    public static boolean isOneOf(Object test, Object... testObjects) {
+
+        Assert.notNull(testObjects, "Objects to tests are null");
+
+        for (Object object : testObjects) {
+            if (isEquals(test, object)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isEquals(Object o1, Object o2) {
+
+        if (o1 == o2) {
+            return true;
+        } else if (o1 == null && o2 != null) {
+            return false;
+        } else if (o1 != null && o2 == null) {
+            return false;
+        } else if (o1 != null) {
+            return o1.equals(o2);
+        } else if (o2 != null) {
+            return o2.equals(o1);
+        }
+
+        return false;
+    }
+
+    public static String toString(Supplier<Object> supplier, boolean ignoreException) {
+
+        if (supplier == null) {
+            return null;
+        }
+
+        try {
+
+            return toString(supplier.get());
+
+        } catch (Exception e) {
+
+            if (ignoreException) {
+                return null;
+            }
+
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+        }
+
+    }
+
+    public static String toString(Object object) {
+        return object == null ? "null" : String.valueOf(object);
     }
 
     @FunctionalInterface
@@ -240,6 +312,27 @@ public abstract class Utils {
         default <V> Function2<T, V> andThen(Function2<? super R, ? extends V> after) {
             Objects.requireNonNull(after);
             return (T t) -> after.apply(apply(t));
+        }
+    }
+
+    public static class AtomicObject<T> {
+
+        @Getter
+        @Setter
+        private T object;
+
+        public boolean isNull() {
+            return object == null;
+        }
+
+        public AtomicObject<T> value(T object) {
+            this.setObject(object);
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(object);
         }
     }
 }
