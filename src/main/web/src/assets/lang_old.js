@@ -1,8 +1,19 @@
-const lang = {
+console.log('loading "lang"...');
 
-    hw: 'hallowelt',
+// TODO don't have a function but only an object be returned
+export default {
+    getTexts() {
+        return texts;
+    }
+}
 
-    test: 'Will I work {}?',
+const specialPasswordCharacters = '!"§$%&/()=?+*#\'<>,;.:-_@[]';
+
+const texts = {
+
+    global: {
+        specialPasswordCharacters: specialPasswordCharacters,
+    },
 
     page: {
 
@@ -10,12 +21,11 @@ const lang = {
             h1: 'Login',
             passwordForget: {
                 h1: 'Login recovery',
-                text: 'Enter the email given with your account. We will send you a recovery link.'
+                text: 'Enter the email given on to your account. We will send you a recovery link.'
             },
             link: {
                 register: 'register new account',
-                forgot_password: 'forgot password',
-                regular_login: 'login page'
+                forgot_password: 'forgot password'
             }
         },
 
@@ -49,7 +59,7 @@ const lang = {
             login_error: 'Login does not have at least 2 proper characters, as well not too exotic.',
 
             password: 'Enter a password',
-            password_description: 'Do have at least 6 chars, at least one lower- and one uppercase letter, one number and one special char (!"§$%&/()=?+*#\'<>,;.:-_@[]) in there.',
+            password_description: 'Do have at least 6 chars, at least one lower- and one uppercase letter, one number and one special char (' + specialPasswordCharacters + ') in there.',
             password_placeholder: 'password',
             password_error: 'Password does not meet requirement',
 
@@ -68,50 +78,5 @@ const lang = {
     }
 };
 
-/**
- *
- * @param key
- * @param replacements either { key:string, value } or array
- * @returns {null}
- */
-lang.get = function (key, replacements) {
 
-    console.warn('key is unhandlable: ' + key);
 
-    if (typeof key != 'string') {
-        console.warn('key is unhandlable, return null' + key);
-        return undefined;
-    }
-
-    console.warn('NOT YET IMPLEMENTED');
-
-    if (new Date().getMilliseconds() > 0) {
-        return 'TODO:' + key + '(replacements=' + replacements + ')';
-    }
-
-    replacements = typeof replacements == 'object' ? replacements : ['' + replacements];
-
-    let value = lang.test;
-    let result = '';
-
-    if (Array.isArray(replacements)) {
-
-        let pos1 = 0;
-        let pos2 = value.indexOf('{}');
-        while (pos2 > -1) {
-            result = value.substr(pos1, pos2);
-            pos1 = pos2 + 2;
-            pos2 = value.indexOf('{}', pos1);
-        }
-
-        result += value.substr(pos2);
-
-    } else if (typeof replacements == 'object') {
-        result = '(unhandled-object) ' + value;
-    }
-
-    return 'RESULT: ' + result;
-
-};
-
-export default lang;
