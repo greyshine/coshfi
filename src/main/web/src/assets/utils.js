@@ -76,19 +76,21 @@ export default {
 
         if (regex == null || typeof regex != 'string') {
             throw new Error('Bad text or regex.');
-        } else if (text == null) {
-            return false;
         }
 
-        return new RegExp(regex, 'g').test(''+text);
+        return new RegExp(regex, 'g').test(text);
+    },
+
+    isEmail(email) {
+        return typeof email == 'string' && /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
     },
 
     validateRemote(fieldValueObject, handler) {
 
-        console.assert( typeof fieldValueObject == 'object' );
+        console.assert(typeof fieldValueObject == 'object');
 
         //asserts.assertNotNull(fieldsValuesObject);
-        handler = typeof handler == 'function' ? handler : ()=>console.log('no handler defined');
+        handler = typeof handler == 'function' ? handler : () => console.log('no handler defined');
 
         //asserts.assertFunction(handler);
         axios.post('/api/validate', fieldValueObject)
@@ -149,6 +151,20 @@ export default {
             //popupAnchor:  [-3, -76]
             popupAnchor: [0, 0]
         }
-    })
+    }),
 
+    executeSafe(f) {
+
+        if (typeof f != 'function') {
+            console.warn('given parameter was not a function. doing nothing')
+            return;
+        }
+
+        try {
+            console.log('execute...', f);
+            return f();
+        } catch (exception) {
+            console.warn('execution gave exception', exception, f);
+        }
+    }
 }

@@ -1,8 +1,10 @@
 package de.greyshine.coffeeshopfinder.web;
 
+import de.greyshine.coffeeshopfinder.entity.UserCrudService;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,12 +29,18 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Slf4j
 public class IndexController {
 
+    private final UserCrudService userCrudService;
+
     @Value("${app.version}")
     private String version;
 
     @Value("${server.sslforfree.wellKnownFile:}")
     private String sslForFreeName;
     private String sslForFreeContent;
+
+    public IndexController(@Autowired UserCrudService userCrudService) {
+        this.userCrudService = userCrudService;
+    }
 
     @PostConstruct
     public void postConstruct() throws IOException {
@@ -66,6 +75,19 @@ public class IndexController {
         }
 
         return sslForFreeContent;
+    }
+
+    @GetMapping(value = "/api/ping", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public boolean ping(@RequestHeader(value = "TOKEN", required = false) String token) {
+
+        log.debug("ping: token={}", token);
+
+        if (token != null) {
+            return userCrudService.updateToken(token);
+        }
+
+        return true;
     }
 
     @Getter

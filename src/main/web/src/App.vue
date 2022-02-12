@@ -7,6 +7,7 @@
     <nav class="main-nav">
       <img src="@/assets/logo.png" alt="CoffeeShopFinder" class="logo" @click="reload"/>
       <div class="logo" @click="reload">CoffeeShopFinder</div>
+      <div v-if="login!=null">{{ login }}&nbsp;-&nbsp;</div>
       <Burger/>
     </nav>
 
@@ -18,7 +19,6 @@
 </template>
 
 <script>
-import Vue from 'vue';
 import axios from 'axios';
 import Burger from '@/components/Menu/Burger.vue';
 import Sidebar from '@/components/Menu/Sidebar.vue';
@@ -33,12 +33,29 @@ export default {
   },
 
   data: ()=>({
-    token: null
+    login: null
   }),
 
   created() {
-    this.$root.bus = new Vue({});
+
+    this.$eventbus.$on('login', (login, token) => {
+      console.log('App login', login, token);
+      this.login = login;
+    });
+
+    this.$eventbus.$on('logout', () => {
+      console.log('App logout', this.login);
+      this.login = null;
+    });
+
+    this.login = this.$getLogin();
+    console.log('login?', this.login);
+
     this.fetchInfo();
+  },
+
+  mounted() {
+
   },
 
   methods: {
@@ -88,7 +105,7 @@ export default {
 
   div.logo {
     width: 98%;
-    color: #A9D24E;
+    color: $colorFg;
     padding-left: 10px;
     padding-top: 10px;
     font-size: x-large;

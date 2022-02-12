@@ -1,7 +1,7 @@
 package de.greyshine.coffeeshopfinder.web;
 
-import de.greyshine.coffeeshopfinder.entity.RegistrationCrudService;
-import de.greyshine.coffeeshopfinder.entity.RegistrationEntity;
+import de.greyshine.coffeeshopfinder.entity.UserCrudService;
+import de.greyshine.coffeeshopfinder.entity.UserEntity;
 import de.greyshine.coffeeshopfinder.service.ValidationService;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import lombok.Data;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
@@ -20,11 +21,13 @@ import javax.validation.constraints.NotBlank;
 @Slf4j
 public class UserController {
 
-    @Autowired
-    private ValidationService validationService;
+    private final ValidationService validationService;
+    private final UserCrudService userCrudService;
 
-    @Autowired
-    private RegistrationCrudService registrationCrudService;
+    public UserController(@Autowired ValidationService validationService, @Autowired UserCrudService userCrudService) {
+        this.validationService = validationService;
+        this.userCrudService = userCrudService;
+    }
 
     @PostMapping(value = "/api/register", produces = MediaType.APPLICATION_JSON_VALUE)
     @SneakyThrows
@@ -35,8 +38,29 @@ public class UserController {
         validationService.validateUsername(registerForm.getName());
         validationService.validateLogin(registerForm.getLogin());
         validationService.validatePassword(registerForm.getPassword());
+        validationService.validateEmail(registerForm.getEmail());
 
-        registrationCrudService.create(registerForm.toRegistrationEntity());
+        userCrudService.create(registerForm.toUserEntity());
+    }
+
+    @PostMapping(value = "/api/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String login(@RequestBody LoginRequestBody loginRequestBody) {
+
+        Utils.validateAndThrow(loginRequestBody);
+
+        return userCrudService.executeLogin(loginRequestBody.getLogin(), loginRequestBody.getPassword());
+    }
+
+    @PostMapping(value = "/api/logout")
+    public void logout(HttpServletRequest request) {
+        userCrudService.logout(request.getHeader("TOKEN"));
+    }
+
+    @PostMapping(value = "/api/login/renew", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void renew(@RequestBody RenewRequestBody renewRequestBody) {
+        log.info("renew {}", renewRequestBody);
+
+        Utils.validateAndThrow(renewRequestBody);
     }
 
     @Data
@@ -55,15 +79,29 @@ public class UserController {
         @Email
         private String email;
 
-        public RegistrationEntity toRegistrationEntity() {
+        public UserEntity toUserEntity() {
 
-            final RegistrationEntity re = new RegistrationEntity();
+            final UserEntity re = new UserEntity();
             re.setName(this.getName());
             re.setLogin(this.getLogin());
-            re.setEmail(this.getEmail());
             re.setPassword(this.getPassword());
+            re.setEmail(this.getEmail());
 
             return re;
         }
+    }
+
+    @Data
+    public static class LoginRequestBody {
+        @NotBlank
+        private String login;
+        @NotBlank
+        private String password;
+    }
+
+    @Data
+    public static class RenewRequestBody {
+        @NotBlank
+        private String email;
     }
 }

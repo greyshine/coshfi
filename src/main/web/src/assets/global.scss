@@ -30,6 +30,11 @@ div.small {
 a {
   color: $colorLink;
   cursor: pointer;
+  text-decoration-line: underline;
+}
+
+a:hover {
+  color: $colorLink;
 }
 
 input {

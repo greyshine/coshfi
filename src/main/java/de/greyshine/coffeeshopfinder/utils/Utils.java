@@ -28,15 +28,35 @@ public abstract class Utils {
     public final static DateTimeFormatter DTF_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     public final static DateTimeFormatter DTF_TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    private final static Random RANDOM = new Random();
+
+    private final static Object SYNC_OBJECT = new Object();
+
+    private static final char[] CC_CHARS = "abcdefghigjklmnopqrstuvwxyzABCDEFGHIJKLMOPQRSTUVWYZ0123456789".toCharArray();
+
     private Utils() {
+    }
+
+    public static char getRandomLetter() {
+        return CC_CHARS[getRandom(0, CC_CHARS.length - 1)];
+    }
+
+    public static String getRandomLetters(int amountLetters) {
+
+        Assert.isTrue(amountLetters >= 0, "parameter must be >= 0");
+
+        final StringBuffer sb = new StringBuffer();
+        for (int i = 0, l = amountLetters; i < l; i++) {
+            sb.append(CC_CHARS[getRandom(0, CC_CHARS.length - 1)]);
+        }
+
+        return sb.toString();
     }
 
     @SneakyThrows
     public static String toHash(String s) {
 
-        if (s == null) {
-            return null;
-        }
+        Assert.notNull(s, "value to be hashed must not be null");
 
         s = s.length() + s;
 
@@ -179,15 +199,28 @@ public abstract class Utils {
 
     public static Exception executeSafe(Runnable2 runnable) {
 
-        if (runnable == null) {
-            return null;
-        }
+        Assert.notNull(runnable, "Runnable must not be null");
 
         try {
             runnable.run();
             return null;
         } catch (Exception e) {
             return e;
+        }
+    }
+
+    public static <T> T executeSafe(Supplier2<T> supplier, T defaultValue) {
+
+        Assert.notNull(supplier, "Supplier must not be null");
+
+        try {
+
+            return supplier.get();
+
+        } catch (Exception e) {
+
+            log.info("Exception on execution, returning default: " + toString(e));
+            return defaultValue;
         }
     }
 
@@ -263,6 +296,37 @@ public abstract class Utils {
 
     public static String toString(Object object) {
         return object == null ? "null" : String.valueOf(object);
+    }
+
+    public static int getRandom(int min, int max) {
+
+        if (min == max) {
+            return min;
+        } else if (min > max) {
+            final int t = min;
+            min = max;
+            max = t;
+        }
+
+        return RANDOM.nextInt(max - min + 1) + min;
+    }
+
+    public static <T> T executeSynced(Object syncObject, Supplier2<T> supplier) throws Exception {
+
+        Assert.notNull(supplier, "Supplier must not be null");
+
+        synchronized (syncObject == null ? SYNC_OBJECT : syncObject) {
+            return supplier.get();
+        }
+    }
+
+    public static void executeSynced(Object syncObject, Runnable2 runnable) throws Exception {
+
+        Assert.notNull(runnable, "Runnable must not be null");
+
+        synchronized (syncObject == null ? SYNC_OBJECT : syncObject) {
+            runnable.run();
+        }
     }
 
     @FunctionalInterface

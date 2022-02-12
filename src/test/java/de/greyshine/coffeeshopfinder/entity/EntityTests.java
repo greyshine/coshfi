@@ -17,7 +17,7 @@ import java.util.List;
 public class EntityTests {
 
     @Autowired
-    private RegistrationCrudService registrationCrudService;
+    private UserCrudService userCrudService;
 
     @BeforeAll
     public static void beforeAll() throws IOException {
@@ -35,18 +35,18 @@ public class EntityTests {
     @Test
     public void cycle() {
 
-        RegistrationEntity re = new RegistrationEntity();
+        UserEntity re = new UserEntity();
         re.setLogin("login");
         re.setPassword("aA!123456");
         re.setName("This is my name");
         re.setEmail("some@email.com");
-        registrationCrudService.create(re);
+        userCrudService.create(re);
 
         log.info("persisted={}", re);
         log.info("id={}", re.getId());
 
-        final List<RegistrationEntity> res =
-                registrationCrudService.iterate(RegistrationEntity.class, JsonCrudService.Sync.NONE, registrationEntity -> {
+        final List<UserEntity> res =
+                userCrudService.iterate(UserEntity.class, JsonCrudService.Sync.NONE, registrationEntity -> {
                     log.info("{}", registrationEntity);
                     return null;
                 });

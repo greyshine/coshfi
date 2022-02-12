@@ -1,5 +1,9 @@
 package de.greyshine.coffeeshopfinder;
 
+import de.greyshine.coffeeshopfinder.entity.UserCrudService;
+import de.greyshine.coffeeshopfinder.entity.UserEntity;
+import de.greyshine.coffeeshopfinder.utils.Utils;
+import de.greyshine.json.crud.JsonCrudService.Sync;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +50,12 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
     @Value("${server.ssl.enabled:false}")
     private boolean sslEnabled;
 
+    @Value("${testuser:false}")
+    private boolean testuser;
+
+    @Autowired
+    private UserCrudService userCrudService;
+
     public CoffeeShopFinder(@Autowired Environment environment) {
         this.environment = environment;
     }
@@ -74,9 +84,36 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
         log.info("version: {}", version);
         log.info("web-port: {}", environment.getProperty("local.server.port"));
         log.info("home-dir: {}", environment.getProperty("data"));
-        log.info("start-time: {}", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
 
+        if (this.testuser) {
+            buildTestUser();
+        }
+
+        log.info("start-time: {}", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
         final long startuptime = System.currentTimeMillis() - appStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         log.info("start-durance: {}ms", startuptime);
+    }
+
+    private void buildTestUser() {
+
+        if (userCrudService.isLogin("test")) {
+            log.warn("test user exists: {}", userCrudService.get("test"));
+            return;
+        }
+
+        final UserEntity user = new UserEntity();
+        user.setLogin("test");
+        user.setPassword(Utils.toHash("test"));
+
+        user.setName("Test");
+        user.setEmail("test@tester.de");
+        user.setAddress("Teststr. 1; D-55555 City");
+
+        final String id = userCrudService.create(user);
+
+        user.setConfirmationCode(null);
+        userCrudService.update(Sync.NONE, user);
+
+        log.warn("created test user: {}", user);
     }
 }

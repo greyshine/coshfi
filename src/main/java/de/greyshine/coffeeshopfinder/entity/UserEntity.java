@@ -26,15 +26,19 @@ public class UserEntity extends Entity {
     @NotBlank(message = "email is mandatory")
     private  String email;
 
-    public String confirmationcode;
+    public String confirmationCode;
     public int badlogins;
 
     private String name;
     /**
      * ';' separated lines of an Address
      */
-    public String address;
+    private String address;
 
     @Valid
     public final List<Location> locations = new ArrayList<>(1);
+
+    public void increaseBadLogins() {
+        badlogins++;
+    }
 }

@@ -4,6 +4,7 @@ import de.greyshine.coffeeshopfinder.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,6 +35,7 @@ public class ExceptionHandling {
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<String> onException(ResponseStatusException exception) {
+        log.debug("passing on a ResponseStatusException={}", exception);
         final String reason = Utils.getDefaultString(exception.getReason(), ()->exception.getMessage());
         return new ResponseEntity<>( reason, exception.getStatus());
     }
@@ -45,11 +47,22 @@ public class ExceptionHandling {
 
         constraintViolationException.getConstraintViolations().forEach(cv -> {
             final String key = cv.getPropertyPath().toString();
-            putIfAbsent( validationFailures, key, ()->new ArrayList<>());
-            validationFailures.get( key ).add(cv.getMessage() );
+            putIfAbsent(validationFailures, key, () -> new ArrayList<>());
+            validationFailures.get(key).add(cv.getMessage());
             log.debug("onException(ConstraintViolationException): {}\nname={}\nerror={}", cv, key, cv.getMessage());
         });
 
         return new ResponseEntity<>(validationFailures, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<String> onException(MissingServletRequestParameterException exception) {
+        log.info("return 400: {}, {}", exception.getClass().getCanonicalName(), exception.getMessage(), exception);
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(LoginException.class)
+    public ResponseEntity onException(LoginException exception) {
+        return new ResponseEntity(HttpStatus.UNAUTHORIZED);
     }
 }

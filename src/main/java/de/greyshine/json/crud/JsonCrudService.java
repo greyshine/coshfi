@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,15 +37,11 @@ public class JsonCrudService {
         this.jsonService = jsonService;
     }
 
-    @PostConstruct
-    public void postConstruct() {
-    }
-
     public <T extends Entity> String create(T item) {
 
         Assert.notNull(item, "item to persist is null");
 
-        jsonService.createDirIFNotExists(item.getClass());
+        jsonService.createDirIfNotExists(item.getClass());
 
         Sync sync = Sync.NONE;
         String id = item.getId();
@@ -58,9 +53,11 @@ public class JsonCrudService {
         }
 
         return executeSynced(sync, () -> {
+
             item.updateCreated();
             final long bytes = jsonService.save(item, false);
             log.debug("stored {}#{} with {} bytes", item.getClass().getCanonicalName(), item.getId(), bytes);
+
             return item.getId();
         });
     }
@@ -114,6 +111,13 @@ public class JsonCrudService {
         return executeSynced(sync, () -> jsonService.delete(clazz, id));
     }
 
+    /**
+     * @param clazz
+     * @param sync
+     * @param function
+     * @param <T>
+     * @return
+     */
     public <T extends Entity> List<T> iterate(Class<T> clazz, Sync sync, Utils.Function2<T, Boolean> function) {
 
         sync = Sync.getDefault(sync);
@@ -152,7 +156,7 @@ public class JsonCrudService {
         return jsonService.serialize(item);
     }
 
-    public Object getSyncObject(Sync sync) {
+    protected Object getSyncObject(Sync sync) {
         if (Sync.GLOBAL == sync) {
             return SYNC_GLOBAL;
         } else if (Sync.LOCAL == sync) {

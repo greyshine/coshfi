@@ -18,7 +18,7 @@ export default {
 
   mounted() {
 
-    this.$root.bus.$on('messages', (...args) => {
+    this.$eventbus.$on('messages', (...args) => {
 
       //console.log('messages.vue', args);
 

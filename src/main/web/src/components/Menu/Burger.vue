@@ -17,7 +17,7 @@ export default {
   methods: {
 
     toggle() {
-      this.$root.bus.$emit('main-menu');
+        this.$eventbus.$emit('main-menu');
     }
   }
 }

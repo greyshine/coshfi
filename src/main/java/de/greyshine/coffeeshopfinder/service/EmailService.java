@@ -78,7 +78,6 @@ public class EmailService {
         params = params != null ? params : Collections.emptyMap();
         inlineContents = inlineContents != null ? inlineContents : Collections.emptySet();
 
-
         String filename = key + (lang == null ? "" : "." + lang) + ".txt";
         File templateFile = new File(configuration.getTemplateDir(), filename);
         if (!templateFile.exists() && lang != null) {
