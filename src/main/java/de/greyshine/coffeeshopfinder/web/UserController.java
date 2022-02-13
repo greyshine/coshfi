@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,11 +45,10 @@ public class UserController {
     }
 
     @PostMapping(value = "/api/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
     public String login(@RequestBody LoginRequestBody loginRequestBody) {
-
         Utils.validateAndThrow(loginRequestBody);
-
-        return userCrudService.executeLogin(loginRequestBody.getLogin(), loginRequestBody.getPassword());
+        return userCrudService.executeLogin(loginRequestBody.getLogin(), loginRequestBody.getPassword(), loginRequestBody.getConfirmationcode());
     }
 
     @PostMapping(value = "/api/logout")
@@ -58,9 +58,12 @@ public class UserController {
 
     @PostMapping(value = "/api/login/renew", produces = MediaType.APPLICATION_JSON_VALUE)
     public void renew(@RequestBody RenewRequestBody renewRequestBody) {
+
         log.info("renew {}", renewRequestBody);
 
         Utils.validateAndThrow(renewRequestBody);
+
+        userCrudService.resetConfirmationCode(renewRequestBody.email);
     }
 
     @Data
@@ -97,6 +100,8 @@ public class UserController {
         private String login;
         @NotBlank
         private String password;
+
+        private String confirmationcode;
     }
 
     @Data

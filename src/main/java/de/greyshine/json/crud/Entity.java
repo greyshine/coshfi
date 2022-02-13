@@ -43,15 +43,22 @@ public abstract class Entity {
         return this;
     }
 
+    /**
+     * @return true if deleted date is given otherwise false
+     */
+    public boolean isDeleted() {
+        return deleted != null;
+    }
+
     public String toString() {
 
         final StringBuilder sb = new StringBuilder();
-        sb.append( getClass().getSimpleName() );
-        sb.append( "(id=" ).append( this.id );
-        sb.append( ", c/u/d=" );
-        sb.append( this.created );
-        sb.append( '/' ).append( updated==null?'-':updated );
-        sb.append( '/' ).append( deleted==null?'-':deleted );
+        sb.append(getClass().getSimpleName());
+        sb.append("(id=").append(this.id);
+        sb.append(", c/u/d=");
+        sb.append(this.created);
+        sb.append('/').append(updated == null ? '-' : updated);
+        sb.append('/').append(deleted == null ? '-' : deleted);
 
         for( Field f : getClass().getDeclaredFields() ) {
 

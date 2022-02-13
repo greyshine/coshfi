@@ -2,8 +2,6 @@ const lang = {
 
     hw: 'hallowelt',
 
-    test: 'Will I work {}?',
-
     page: {
 
         login: {
@@ -30,11 +28,15 @@ const lang = {
 
         login: {
             login: 'Login',
+            password: 'Password',
+            confirmationcode: 'Confirmationcode',
+            email: 'Email',
+
             login_placeholder: 'Login',
             password_placeholder: 'Password',
             email_placeholder: 'Email',
 
-            email: 'Email'
+            fail: 'Failed to login with the given credentials.',
         },
 
         register: {

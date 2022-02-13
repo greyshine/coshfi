@@ -71,17 +71,20 @@ public class EmailService {
     }
 
     @SneakyThrows
-    public void sendEmailByTemplate(String receiverEmail, String key, String lang, Map<String, String> params, Set<Attachment> attachments, Set<InlineContent> inlineContents) {
+    public void sendEmailByTemplate(final String receiverEmail, final String filenamePrefix, final String lang,
+                                    Map<String, String> params,
+                                    Set<Attachment> attachments,
+                                    Set<InlineContent> inlineContents) {
 
-        Assert.isTrue(isNotBlank(key), "No key defined");
+        Assert.isTrue(isNotBlank(filenamePrefix), "No filenamePrefix defined");
 
         params = params != null ? params : Collections.emptyMap();
         inlineContents = inlineContents != null ? inlineContents : Collections.emptySet();
 
-        String filename = key + (lang == null ? "" : "." + lang) + ".txt";
+        String filename = filenamePrefix + (lang == null ? "" : "." + lang) + ".txt";
         File templateFile = new File(configuration.getTemplateDir(), filename);
         if (!templateFile.exists() && lang != null) {
-            filename = key + ".txt";
+            filename = filenamePrefix + ".txt";
             templateFile = new File(configuration.getTemplateDir(), filename);
         }
 
@@ -110,11 +113,12 @@ public class EmailService {
             message = message.replace(k, params.get(variable));
         }
 
-        sendEmail(receiverEmail, subject, message, attachments);
+        sendEmail(receiverEmail, subject, message, null, attachments);
     }
 
-    public void sendEmail(String receiverEmail, String subject, String htmlBody) throws MessagingException {
-        sendEmail(receiverEmail, subject, htmlBody, Collections.emptySet());
+    @SneakyThrows
+    public void sendEmail(String receiverEmail, String subject, String htmlBody, String textBody) {
+        sendEmail(receiverEmail, subject, htmlBody, textBody, Collections.emptySet());
     }
 
     /**
@@ -127,7 +131,7 @@ public class EmailService {
      * @throws MessagingException
      */
     @SneakyThrows
-    public void sendEmail(String receiverEmail, String subject, String htmlBody, Set<Attachment> attachments) throws MessagingException {
+    public void sendEmail(String receiverEmail, String subject, String htmlBody, String textBody, Set<Attachment> attachments) throws MessagingException {
 
         attachments = attachments != null ? attachments : Collections.emptySet();
 
@@ -146,6 +150,12 @@ public class EmailService {
         helper.setFrom(configuration.getSender());
         helper.setTo(receiverEmail);
         helper.setSubject(trimToEmpty(subject));
+
+        textBody = trimToNull(textBody);
+        if (textBody != null) {
+            log.debug("textBody:\n{}", textBody);
+            helper.setText(textBody, false);
+        }
 
         htmlBody = StringUtils.trimToNull(htmlBody);
         if (htmlBody != null) {

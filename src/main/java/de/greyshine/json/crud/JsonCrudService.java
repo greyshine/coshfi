@@ -22,6 +22,7 @@ public class JsonCrudService {
             return "SYNC for GLOBAL";
         }
     };
+
     public final Object SYNC_LOCAL = new Object() {
         @Override
         public String toString() {
@@ -30,6 +31,17 @@ public class JsonCrudService {
     };
 
     private final JsonService jsonService;
+
+    public <T extends Entity> T iterateSingle(Class<T> clazz, Sync sync, Utils.Function2<T, IterationResult> function) {
+
+        final List<T> items = iterate(clazz, sync, function);
+
+        if (items.size() > 1) {
+            log.warn("There is more than one result. Using only the first!");
+        }
+
+        return items.isEmpty() ? null : items.get(0);
+    }
 
     public JsonCrudService(@Autowired JsonService jsonService) {
 
@@ -111,18 +123,13 @@ public class JsonCrudService {
         return executeSynced(sync, () -> jsonService.delete(clazz, id));
     }
 
-    /**
-     * @param clazz
-     * @param sync
-     * @param function
-     * @param <T>
-     * @return
-     */
-    public <T extends Entity> List<T> iterate(Class<T> clazz, Sync sync, Utils.Function2<T, Boolean> function) {
+    public <T extends Entity> List<T> iterate(Class<T> clazz, Sync sync, Utils.Function2<T, IterationResult> function) {
 
+        Assert.notNull(clazz, "Class must be set");
         sync = Sync.getDefault(sync);
-        Assert.notNull(function, "Consumer is null");
+        Assert.notNull(function, "Function must be set");
 
+        // TOD apply SYNC
         final Iterator<String> idsIter = jsonService.getIds(clazz);
 
         final List<T> results = new ArrayList<>(0);
@@ -135,11 +142,14 @@ public class JsonCrudService {
 
                 final T item = jsonService.load(clazz, id);
 
-                final Boolean result = function.apply(item);
+                IterationResult iterationResult = function.apply(item);
+                iterationResult = iterationResult != null ? iterationResult : IterationResult.IGNORE;
 
-                if (Boolean.TRUE == result) {
+                if (iterationResult.isUse()) {
                     results.add(item);
-                } else if (Boolean.FALSE == result) {
+                }
+
+                if (iterationResult.isQuit()) {
                     break;
                 }
 
@@ -150,6 +160,31 @@ public class JsonCrudService {
 
         return results;
     }
+
+    public enum IterationResult {
+
+        USE(true, false),
+        USE_QUIT(true, true),
+        IGNORE(false, false),
+        IGNORE_QUIT(false, true);
+
+        public final boolean use;
+        public final boolean quit;
+
+        IterationResult(boolean isUse, boolean isQuit) {
+            this.use = isUse;
+            this.quit = isQuit;
+        }
+
+        public boolean isQuit() {
+            return quit;
+        }
+
+        public boolean isUse() {
+            return use;
+        }
+    }
+
 
     @SneakyThrows
     public <T> String toString(T item) {
@@ -209,4 +244,6 @@ public class JsonCrudService {
             return sync == null ? NONE : sync;
         }
     }
+
+
 }

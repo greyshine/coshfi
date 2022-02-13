@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @SpringBootTest(
-        args = {"--datadir=app-testdata"},
+        args = {"--datadir=app-testdata", "--dir.jsondata=appdata/localdev/data", "--dir.locations=appdata/localdev/locations/wm.json"},
         webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
 @TestPropertySources({

@@ -73,7 +73,7 @@ export default {
         case 'logout':
           this.$logout();
           // will throw an exception if we are already on page /
-          this.$router.push('/')
+          this.$router.push('/');
           break;
       }
 

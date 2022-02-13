@@ -20,7 +20,7 @@ export default {
 
     this.$eventbus.$on('messages', (...args) => {
 
-      //console.log('messages.vue', args);
+      //console.log('messages.vue on messages', args);
 
       if (args.length == 0) {
         console.log('nothing to do, no command defined at position [0]');
@@ -43,7 +43,11 @@ export default {
           break;
 
         default:
+
           console.log('unknown command', args[0]);
+          // TODO: use as default => ADD; only send if there was a message
+          //this.$eventbus.$on('messages', 'ADD', subarray without first);
+
           return;
       }
     });
@@ -121,7 +125,7 @@ export default {
 
 div {
 
-  background-color: #FFFFFF;
+  //background-color: #FFFFFF;
   border-radius: 3px;
 
   ul {

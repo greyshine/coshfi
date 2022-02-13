@@ -35,10 +35,14 @@ public class UserEntity extends Entity {
      */
     private String address;
 
+    private String language;
+
     @Valid
     public final List<Location> locations = new ArrayList<>(1);
 
     public void increaseBadLogins() {
         badlogins++;
     }
+
+
 }

@@ -31,6 +31,11 @@
                     :state="password_state"
                     label-for="password">
         <b-form-input id="password" v-model="password" :placeholder="lang.form.register.password_placeholder" trim/>
+        <!--
+        <b-form-text id="password-help-block">
+          Your password must be 8-20 characters long, contain letters and numbers, and must not
+          contain spaces, special characters, or emoji.
+        </b-form-text>-->
       </b-form-group>
 
       <b-form-group :invalid-feedback="lang.form.register.password2_error"

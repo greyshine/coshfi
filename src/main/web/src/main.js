@@ -123,13 +123,9 @@ new Vue({
 
 
 setInterval(() => {
-
-  const loginInfo = getLsLogin();
-  console.log('intervalled', loginInfo);
   axios.get('/api/ping')
       .then(response => {
-
-        console.log('ping > ', typeof response.data, response.data);
+        //console.log('ping > ', typeof response.data, response.data);
         if (response.data === false) {
           Vue.prototype.$logout();
         }

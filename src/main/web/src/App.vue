@@ -44,7 +44,7 @@ export default {
     });
 
     this.$eventbus.$on('logout', () => {
-      console.log('App logout', this.login);
+      //console.log('App logout', this.login);
       this.login = null;
     });
 
@@ -70,7 +70,7 @@ export default {
       axios.get('/info')
       .then(
           response => {
-            console.log('response', response);
+            console.log('server.info', response.data);
           },
           error => {
             console.log('error', error);

@@ -4,12 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -189,12 +189,38 @@ public abstract class Utils {
         return isBlank(arg) ? null : function.apply(arg);
     }
 
+    public static boolean isEquals(Object o1, Object o2, boolean isNullsEqual) {
+        if (o1 == null && o2 == null) {
+            return isNullsEqual;
+        } else if (o1 == o2) {
+            return true;
+        } else if (o1 == null || o2 == null) {
+            return false;
+        } else {
+            return o1.equals(o2);
+        }
+    }
+
     public static boolean isEqualsTrimmed(String s1, String s2, boolean isNullEquals) {
+        return isEquals(trimToNull(s1), trimToNull(s2), isNullEquals);
+    }
 
-        s1 = trimToNull(s1);
-        s2 = trimToNull(s2);
+    public static boolean isEqualsIgnoreCaseTrimmed(String s1, String s2, boolean isNullEquals) {
+        return isEquals(trimToLowercaseNull(s1), trimToLowercaseNull(s2), isNullEquals);
+    }
 
-        return s1 == null && s2 == null ? isNullEquals : StringUtils.equals(s1, s2);
+    public static String trimToLowercaseNull(String s) {
+        if (s == null || (s = s.trim()).isBlank()) {
+            return null;
+        }
+        return s.toLowerCase(Locale.ROOT);
+    }
+
+    public static String trimToUppercaseNull(String s) {
+        if (s == null || (s = s.trim()).isBlank()) {
+            return null;
+        }
+        return s.toUpperCase(Locale.ROOT);
     }
 
     public static Exception executeSafe(Runnable2 runnable) {
@@ -248,26 +274,9 @@ public abstract class Utils {
         Assert.notNull(testObjects, "Objects to tests are null");
 
         for (Object object : testObjects) {
-            if (isEquals(test, object)) {
+            if (isEquals(test, object, true)) {
                 return true;
             }
-        }
-
-        return false;
-    }
-
-    private static boolean isEquals(Object o1, Object o2) {
-
-        if (o1 == o2) {
-            return true;
-        } else if (o1 == null && o2 != null) {
-            return false;
-        } else if (o1 != null && o2 == null) {
-            return false;
-        } else if (o1 != null) {
-            return o1.equals(o2);
-        } else if (o2 != null) {
-            return o2.equals(o1);
         }
 
         return false;
@@ -295,6 +304,10 @@ public abstract class Utils {
     }
 
     public static String toString(Object object) {
+
+        // TODO: make Runnabke be more extensive logged
+
+
         return object == null ? "null" : String.valueOf(object);
     }
 
@@ -327,6 +340,11 @@ public abstract class Utils {
         synchronized (syncObject == null ? SYNC_OBJECT : syncObject) {
             runnable.run();
         }
+    }
+
+    @SneakyThrows
+    public static String getUrlencoded(String value) {
+        return value == null ? null : URLEncoder.encode(value, "UTF-8");
     }
 
     @FunctionalInterface

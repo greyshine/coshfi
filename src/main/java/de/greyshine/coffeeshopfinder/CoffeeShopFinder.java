@@ -2,8 +2,10 @@ package de.greyshine.coffeeshopfinder;
 
 import de.greyshine.coffeeshopfinder.entity.UserCrudService;
 import de.greyshine.coffeeshopfinder.entity.UserEntity;
+import de.greyshine.coffeeshopfinder.service.EmailService;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import de.greyshine.json.crud.JsonCrudService.Sync;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,6 +58,9 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
     @Autowired
     private UserCrudService userCrudService;
 
+    @Autowired
+    private EmailService emailService;
+
     public CoffeeShopFinder(@Autowired Environment environment) {
         this.environment = environment;
     }
@@ -77,6 +82,7 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
         };
     }
 
+    @SneakyThrows
     @Override
     public void onApplicationEvent(final ApplicationReadyEvent event) {
 
@@ -92,12 +98,19 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
         log.info("start-time: {}", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
         final long startuptime = System.currentTimeMillis() - appStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         log.info("start-durance: {}ms", startuptime);
+
+        final String localPublicIpAddress = "?";
+        final String text = "Started on " + localPublicIpAddress + ", " + LocalDateTime.now();
+
+        emailService.sendEmail("coffeeshopfinder@web.de", text, null, text);
     }
 
     private void buildTestUser() {
 
         if (userCrudService.isLogin("test")) {
-            log.warn("test user exists: {}", userCrudService.get("test"));
+
+            final UserEntity user = userCrudService.getByLogin("test");
+            log.warn("test user exists: {}", user);
             return;
         }
 
@@ -106,7 +119,7 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
         user.setPassword(Utils.toHash("test"));
 
         user.setName("Test");
-        user.setEmail("test@tester.de");
+        user.setEmail("coffeeshopfinder@web.de");
         user.setAddress("Teststr. 1; D-55555 City");
 
         final String id = userCrudService.create(user);
