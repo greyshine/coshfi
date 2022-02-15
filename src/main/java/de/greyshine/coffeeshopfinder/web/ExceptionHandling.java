@@ -23,20 +23,23 @@ public class ExceptionHandling {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> onException(Exception exception) {
+
         log.error("return 500: {}, {}", exception.getClass().getCanonicalName(), exception.getMessage(), exception);
         return new ResponseEntity<>( exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> onException(RuntimeException exception) {
+
         log.error("return 500: {}, {}", exception.getClass().getCanonicalName(), exception.getMessage(), exception);
         return new ResponseEntity<>( exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<String> onException(ResponseStatusException exception) {
+
         log.debug("passing on a ResponseStatusException={}", exception);
-        final String reason = Utils.getDefaultString(exception.getReason(), ()->exception.getMessage());
+        final var reason = Utils.getDefaultString(exception.getReason(), () -> exception.getMessage());
         return new ResponseEntity<>( reason, exception.getStatus());
     }
 
@@ -46,7 +49,8 @@ public class ExceptionHandling {
         final Map<String, List<String>> validationFailures = new HashMap<>();
 
         constraintViolationException.getConstraintViolations().forEach(cv -> {
-            final String key = cv.getPropertyPath().toString();
+
+            final var key = cv.getPropertyPath().toString();
             putIfAbsent(validationFailures, key, () -> new ArrayList<>());
             validationFailures.get(key).add(cv.getMessage());
             log.debug("onException(ConstraintViolationException): {}\nname={}\nerror={}", cv, key, cv.getMessage());
@@ -57,6 +61,7 @@ public class ExceptionHandling {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<String> onException(MissingServletRequestParameterException exception) {
+
         log.info("return 400: {}, {}", exception.getClass().getCanonicalName(), exception.getMessage(), exception);
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }

@@ -48,6 +48,7 @@
 
 <script>
 // import utils from "@/assets/utils";
+import user from "@/assets/user";
 
 export default {
 
@@ -71,7 +72,9 @@ export default {
       switch (hint) {
 
         case 'logout':
-          this.$logout();
+
+          user.logout();
+          this.$eventbus.$emit('logout');
           // will throw an exception if we are already on page /
           this.$router.push('/');
           break;

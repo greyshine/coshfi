@@ -17,11 +17,13 @@ import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -42,7 +44,7 @@ public class EmailService {
     public void postConstruct() {
 
         Assert.notNull(configuration.getTemplateDir(), "no email template dir");
-        final File emailTemplateDir = Utils.getFile(configuration.getTemplateDir());
+        final var emailTemplateDir = Utils.getFile(configuration.getTemplateDir());
         Assert.isTrue(emailTemplateDir.isDirectory() && emailTemplateDir.canRead(), "Cannot access email template dir: " + emailTemplateDir.getAbsolutePath());
 
         log.info("email-templates: {}", emailTemplateDir);
@@ -54,18 +56,18 @@ public class EmailService {
         Assert.notNull(configuration, "No configuration is set");
         Assert.isTrue(isNotBlank(configuration.getUsername()), "Username is blank");
 
-        final JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        final var mailSender = new JavaMailSenderImpl();
         mailSender.setHost(configuration.getHost());
         mailSender.setPort(configuration.getPort());
 
         mailSender.setUsername(configuration.getUsername());
         mailSender.setPassword(configuration.getPassword());
 
-        final Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", String.valueOf(configuration.isDebug()));
+        final var properties = mailSender.getJavaMailProperties();
+        properties.put("mail.transport.protocol", "smtp");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");
+        properties.put("mail.debug", String.valueOf(configuration.isDebug()));
 
         return mailSender;
     }
@@ -81,8 +83,9 @@ public class EmailService {
         params = params != null ? params : Collections.emptyMap();
         inlineContents = inlineContents != null ? inlineContents : Collections.emptySet();
 
-        String filename = filenamePrefix + (lang == null ? "" : "." + lang) + ".txt";
-        File templateFile = new File(configuration.getTemplateDir(), filename);
+        var filename = filenamePrefix + (lang == null ? "" : "." + lang) + ".txt";
+        var templateFile = new File(configuration.getTemplateDir(), filename);
+
         if (!templateFile.exists() && lang != null) {
             filename = filenamePrefix + ".txt";
             templateFile = new File(configuration.getTemplateDir(), filename);
@@ -91,23 +94,23 @@ public class EmailService {
         templateFile = Utils.getFile(templateFile);
         Assert.isTrue(templateFile.isFile(), "The file seems not to exist: " + templateFile);
 
-        final String content = Utils.readString(templateFile);
+        final var content = Utils.readString(templateFile);
 
-        String subject = content.substring(0, content.indexOf('\n')).trim();
-        String message = content.substring(content.indexOf('\n') + 1).trim();
+        var subject = content.substring(0, content.indexOf('\n')).trim();
+        var message = content.substring(content.indexOf('\n') + 1).trim();
 
         for (InlineContent inlineContent : inlineContents) {
-            final String k = "${" + inlineContent.variable + "}";
+            final var k = "${" + inlineContent.variable + "}";
             message = message.replace(k, inlineContent.toBase64());
         }
 
-        for (String variable : params.keySet()) {
+        for (var variable : params.keySet()) {
 
             if (isBlank(variable)) {
                 continue;
             }
 
-            final String k = "${" + variable + "}";
+            final var k = "${" + variable + "}";
 
             subject = subject.replace(k, params.get(variable));
             message = message.replace(k, params.get(variable));
@@ -141,9 +144,9 @@ public class EmailService {
             return;
         }
 
-        final MimeMessage message = javaMailSender.createMimeMessage();
+        final var message = javaMailSender.createMimeMessage();
 
-        final MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        final var helper = new MimeMessageHelper(message, true);
 
         log.debug("sender: {}", configuration.getSender());
 
@@ -223,7 +226,7 @@ public class EmailService {
             this.variable = variable;
             this.contentType = Files.probeContentType(file.toPath());
 
-            final byte[] bytes = Utils.read(file);
+            final var bytes = Utils.read(file);
             data = Base64.getUrlEncoder().encodeToString(bytes);
         }
 

@@ -15,7 +15,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 
@@ -31,25 +30,25 @@ public class TokenInterceptor implements HandlerInterceptor {
 
         log.debug("request {}, {}", handler.getClass().getCanonicalName(), handler);
 
-        final HandlerMethod handlerMethod = handler instanceof HandlerMethod ? (HandlerMethod) handler : null;
+        final var handlerMethod = handler instanceof HandlerMethod ? (HandlerMethod) handler : null;
 
         if (handlerMethod == null) {
             return true;
         }
 
-        final Method method = handlerMethod.getMethod();
+        final var method = handlerMethod.getMethod();
         //log.info("{}", method);
 
-        final String token = trimToNull(request.getHeader("TOKEN"));
+        final var token = trimToNull(request.getHeader("TOKEN"));
         updateToken(method.getDeclaredAnnotation(Tokenized.class), token);
 
         // Check @Token parameter
-        int i = -1;
+        var i = -1;
         for (Annotation[] annotations : method.getParameterAnnotations()) {
 
             i++;
 
-            for (int i2 = 0; i2 < annotations.length; i2++) {
+            for (var i2 = 0; i2 < annotations.length; i2++) {
 
                 // log.info( "[{}] {} {}", i, i2, annotations[i2] );
 
@@ -73,12 +72,12 @@ public class TokenInterceptor implements HandlerInterceptor {
             return;
         }
 
-        final UserCrudService.TokenInfo tokenInfo = this.userService.getTokenInfo(token);
+        final var userInfo = this.userService.getTokenInfo(token);
 
-        if (tokenInfo == null || !tokenInfo.isAccessible()) {
+        if (!userInfo.isPresent()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        tokenInfo.updateLastAccess();
+        userInfo.get().updateLastAccess();
     }
 }

@@ -24,7 +24,8 @@
                       :state="password_state"
                       label-for="password">
           <b-form-input id="password" v-model="password" :placeholder="lang.form.login.password_placeholder"
-                        required trim type="password"/>
+                        required trim type="password"
+                        @dblclick="dblClickTest"/>
         </b-form-group>
 
         <b-form-group v-if="confirmationcode != null"
@@ -65,9 +66,11 @@
 
 <script>
 import axios from 'axios';
+import user from '@/assets/user.js';
 import utils from '@/assets/utils.js';
 import lang from '@/assets/lang.js';
 import Messages from '@/components/Messages.vue'
+import Vue from "vue";
 
 export default {
 
@@ -87,7 +90,6 @@ export default {
 
     email: null,
 
-
     showLogin: true,
 
     formSubmitSuccess: true
@@ -104,10 +106,10 @@ export default {
   },
 
   mounted() {
+
     //console.log('Login.mounted() router', this.$router);
-
-    new URLSearchParams(window.location.search);
-
+    //new URLSearchParams(window.location.search);
+    //console.log('Login MOUNTED user:', user);
   },
 
   computed: {
@@ -144,9 +146,19 @@ export default {
       axios.post('/api/login', {login: this.login, password: this.password})
           .then(response => {
 
-                this.formSubmitFailure = false;
+                this.formSubmitSuccess = true;
 
-                this.$login(this.login, response.data);
+                if (user.isToken()) {
+                  // TODO logout if existing user is logged in
+                  console.warn('user is already logged in', user);
+                }
+
+                console.log('login success', response.data);
+
+                user.login = response.data.login;
+                user.token = response.data.token;
+                user.rrs = response.data.rrs;
+                user.store();
 
                 this.login = '';
                 this.password = '';
@@ -154,6 +166,9 @@ export default {
 
                 this.$router.push('/');
 
+                console.log('post login user', user);
+
+                Vue.prototype.$eventbus.$emit('login', user);
               },
               error => {
 
@@ -194,7 +209,14 @@ export default {
                 console.warn('error.response', error.response);
               }
           );
+    },
+
+    dblClickTest() {
+      if (this.login === 'test' && (this.password == null || this.password == '')) {
+        this.password = 'Test_123';
+      }
     }
+
   }
 }
 

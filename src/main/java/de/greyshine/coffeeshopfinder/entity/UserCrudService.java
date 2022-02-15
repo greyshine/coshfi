@@ -14,10 +14,7 @@ import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static de.greyshine.coffeeshopfinder.utils.Utils.*;
@@ -29,7 +26,7 @@ import static org.springframework.util.Assert.*;
 public class UserCrudService extends JsonCrudService {
 
     private static final AtomicLong IDS = new AtomicLong(0);
-    private static final Map<String, TokenInfo> tokenMap = new HashMap<>();
+    private static final Map<String, UserInfo> activeUserMap = new HashMap<>();
     private static final int MAX_BAD_LOGINS = 6;
 
     private final EmailService emailService;
@@ -37,17 +34,29 @@ public class UserCrudService extends JsonCrudService {
     private final long tokenInfoTimeToLive = 10 * 60 * 1000;
 
     public UserCrudService(@Autowired JsonService jsonService, @Autowired ValidationService validationService, @Autowired EmailService emailService) {
+
         super(jsonService);
+
         this.emailService = emailService;
         this.validationService = validationService;
     }
 
+    public static Map<String, UserInfo> getTokenMap() {
+        return activeUserMap;
+    }
+
+    /**
+     * Notice. tha password will be hashed
+     *
+     * @param userEntity
+     * @return
+     */
     public String create(UserEntity userEntity) {
 
         notNull(userEntity, UserEntity.class.getCanonicalName() + " is null");
         isNull(userEntity.getId(), UserEntity.class.getCanonicalName() + " is null");
         isTrue(validationService.isValidLogin(userEntity.getLogin()), UserEntity.class.getCanonicalName() + " illegal login: " + userEntity.getLogin());
-        notNull(userEntity.getPassword(), "password is null");
+        isTrue(validationService.isValidPassword(userEntity.getPassword()), UserEntity.class.getCanonicalName() + " illegal password: " + userEntity.getPassword());
 
         isTrue(!isLoginOrName(userEntity.getLogin(), userEntity.getName()), "Login or user is used: login=" + userEntity.getLogin() + ", user=" + userEntity.getName());
 
@@ -55,11 +64,11 @@ public class UserCrudService extends JsonCrudService {
         isTrue(!isName(userEntity.getName()), "User already exists: " + userEntity.getName());
 
         userEntity.setEmail(userEntity.getEmail().toLowerCase(Locale.ROOT));
-        userEntity.setPassword(Utils.toHash(userEntity.getPassword()));
+        userEntity.setPassword(Utils.toHashPassword(userEntity.getPassword()));
 
         final UserEntity existingUserEntity = iterateSingle(UserEntity.class, Sync.LOCAL, user -> {
 
-            boolean isHit = Utils.isEqualsIgnoreCaseTrimmed(userEntity.getLogin(), user.getLogin(), false);
+            var isHit = Utils.isEqualsIgnoreCaseTrimmed(userEntity.getLogin(), user.getLogin(), false);
             if (isHit) {
                 log.info("Refusing User creation; existing login: {}", user);
                 return IterationResult.USE_QUIT;
@@ -88,24 +97,6 @@ public class UserCrudService extends JsonCrudService {
         return super.create(userEntity);
     }
 
-    public boolean isLoginOrName(final String login, final String name) {
-
-        isTrue(trimToNull(login) != null || trimToNull(name) != null, "Login and User are null");
-
-        final List<UserEntity> userEntities = super.iterate(UserEntity.class, Sync.LOCAL, (userEntity) -> {
-
-            if (Utils.isEqualsTrimmed(userEntity.getLogin(), login, false)) {
-                return IterationResult.USE_QUIT;
-            } else if (Utils.isEqualsTrimmed(userEntity.getName(), name, false)) {
-                return IterationResult.USE_QUIT;
-            }
-
-            return IterationResult.IGNORE;
-        });
-
-        return !userEntities.isEmpty();
-    }
-
     public boolean isLogin(final String login) {
 
         return null != iterateSingle(UserEntity.class, Sync.LOCAL, userEntity -> {
@@ -128,9 +119,27 @@ public class UserCrudService extends JsonCrudService {
         });
     }
 
+    public boolean isLoginOrName(final String login, final String name) {
+
+        isTrue(trimToNull(login) != null || trimToNull(name) != null, "Login and User are null");
+
+        final var userEntities = super.iterate(UserEntity.class, Sync.LOCAL, (userEntity) -> {
+
+            if (Utils.isEqualsTrimmed(userEntity.getLogin(), login, false)) {
+                return IterationResult.USE_QUIT;
+            } else if (Utils.isEqualsTrimmed(userEntity.getName(), name, false)) {
+                return IterationResult.USE_QUIT;
+            }
+
+            return IterationResult.IGNORE;
+        });
+
+        return !userEntities.isEmpty();
+    }
+
     public String createConfirmationCode() {
 
-        final StringBuffer sb = new StringBuffer();
+        final var sb = new StringBuffer();
 
         for (int i = 0, l = Utils.getRandom(3, 5); i < l; i++) {
             sb.append(Utils.getRandomLetter());
@@ -146,22 +155,25 @@ public class UserCrudService extends JsonCrudService {
     }
 
     @SneakyThrows
-    public String executeLogin(String login, String password, String confirmationcode) {
+    public UserInfo executeLogin(String login, String password, String confirmationcode) {
 
         if (isBlank(login) || isBlank(password)) {
             throw new LoginException(login);
         }
 
-        final UserEntity userEntity = iterateSingle(UserEntity.class, Sync.GLOBAL,
+        final var userEntity = iterateSingle(UserEntity.class, Sync.GLOBAL,
                 user -> login.equalsIgnoreCase(user.getLogin()) ? IterationResult.USE_QUIT : IterationResult.IGNORE);
 
-        boolean doUpdate = false;
+        var doUpdate = false;
 
         if (userEntity == null) {
 
             throw new LoginException(login);
 
-        } else if (!Utils.isEquals(userEntity.getPassword(), Utils.toHash(password), false)) {
+        } else if (!Utils.isEquals(userEntity.getPassword(), Utils.toHashPassword(password), false)) {
+
+            log.info("in: {} -> {}", password, Utils.toHashPassword(password));
+            log.info("user: {}", userEntity.getPassword());
 
             userEntity.increaseBadLogins();
             super.update(Sync.GLOBAL, userEntity);
@@ -192,25 +204,25 @@ public class UserCrudService extends JsonCrudService {
             super.update(Sync.GLOBAL, userEntity);
         }
 
-        final TokenInfo tokenInfo = new TokenInfo(userEntity.getId());
-        executeSynced(tokenMap, () -> tokenMap.put(tokenInfo.getToken(), tokenInfo));
-        log.info("created {}", tokenInfo);
+        final var userInfo = new UserInfo(userEntity.getLogin(), userEntity.getRightsAndRoles());
+        executeSynced(activeUserMap, () -> activeUserMap.put(userInfo.getToken(), userInfo));
+        log.info("created {}", userInfo);
 
-        return tokenInfo.getToken();
+        return userInfo;
     }
 
     @SneakyThrows
-    public TokenInfo getTokenInfo(String token) {
-        return executeSynced(tokenMap, () -> tokenMap.get(token));
+    public Optional<UserInfo> getTokenInfo(String token) {
+        return executeSynced(activeUserMap, () -> Optional.ofNullable(activeUserMap.get(token)));
     }
 
     public void removeInvalidTokens() throws Exception {
 
-        executeSynced(tokenMap, () -> {
+        executeSynced(activeUserMap, () -> {
 
-            tokenMap.values().forEach(tokenInfo -> {
+            activeUserMap.values().forEach(tokenInfo -> {
 
-                final Boolean isValid = executeSafe(() -> tokenInfo.isAccessible(), null);
+                final var isValid = executeSafe(() -> tokenInfo.isAccessible(), null);
 
                 if (Boolean.TRUE.equals(isValid)) {
                     return;
@@ -219,7 +231,7 @@ public class UserCrudService extends JsonCrudService {
                     return;
                 }
 
-                tokenMap.remove(tokenInfo.getToken());
+                activeUserMap.remove(tokenInfo.getToken());
                 log.info("removed invalid token: {}", tokenInfo);
             });
 
@@ -229,18 +241,18 @@ public class UserCrudService extends JsonCrudService {
     @SneakyThrows
     public boolean logout(String token) {
 
-        final TokenInfo tokenInfo = executeSynced(tokenMap, () -> tokenMap.remove(token));
+        final var userInfo = executeSynced(activeUserMap, () -> activeUserMap.remove(token));
 
-        log.info("logout: {} -> {}", token, tokenInfo != null);
+        log.info("logout: {} -> {}", token, userInfo != null);
 
-        return tokenInfo != null;
+        return userInfo != null;
     }
 
     public UserEntity getByLogin(String login) {
 
         Assert.notNull(login, "Login must not be null");
 
-        final List<UserEntity> users = iterate(UserEntity.class, Sync.LOCAL, user -> login.equals(user.getLogin()) ? IterationResult.USE_QUIT : IterationResult.IGNORE);
+        final var users = iterate(UserEntity.class, Sync.LOCAL, user -> login.equals(user.getLogin()) ? IterationResult.USE_QUIT : IterationResult.IGNORE);
 
         Assert.isTrue(users.isEmpty() || users.size() == 1, "Unexpected amount of users with login=" + login);
 
@@ -248,20 +260,20 @@ public class UserCrudService extends JsonCrudService {
     }
 
     @SneakyThrows
-    public boolean updateToken(String token) {
+    public boolean updateUserInfo(String token) {
 
-        final TokenInfo tokenInfo = getTokenInfo(token);
+        final var userInfo = activeUserMap.get(token);
 
-        return tokenInfo != null && tokenInfo.updateLastAccess();
+        return userInfo != null && userInfo.updateLastAccess();
     }
 
     public void resetConfirmationCode(String email) {
 
         isTrue(isNotBlank(email), "Email must not be blank");
 
-        final String emailLc = email.trim().toLowerCase(Locale.ROOT);
+        final var emailLc = email.trim().toLowerCase(Locale.ROOT);
 
-        final List<UserEntity> userEntities =
+        final var userEntities =
                 iterate(UserEntity.class, Sync.LOCAL, (userEntity) -> emailLc.equals(userEntity.getEmail().toLowerCase(Locale.ROOT)) ? IterationResult.USE_QUIT : IterationResult.IGNORE_QUIT);
 
         if (userEntities.isEmpty()) {
@@ -274,7 +286,7 @@ public class UserCrudService extends JsonCrudService {
 
             try {
 
-                String confirmationcode = userEntity.getConfirmationCode();
+                var confirmationcode = userEntity.getConfirmationCode();
 
                 if (confirmationcode == null) {
                     confirmationcode = createConfirmationCode();
@@ -282,7 +294,7 @@ public class UserCrudService extends JsonCrudService {
                     super.update(Sync.LOCAL, userEntity);
                 }
 
-                final Map<String, String> params = new HashMap<>();
+                final var params = new HashMap<String, String>();
                 params.put("name", userEntity.getName());
                 params.put("confirmationcode", userEntity.getConfirmationCode());
                 params.put("link", "https://www.coffeeshopfinder.de/login?login=" +
@@ -297,14 +309,26 @@ public class UserCrudService extends JsonCrudService {
 
     @Data
     @RequiredArgsConstructor
-    public class TokenInfo {
+    public class UserInfo {
+
         private final LocalDateTime creation = LocalDateTime.now();
-        private final String token = getRandomLetters(32);
+        private final String token = getRandomLetters(32 * 4);
+
         @NonNull
-        private final String userId;
+        private final String login;
+
+        /**
+         * Rights and roles
+         */
+        private final Set<String> rrs = new HashSet<>();
 
         @Setter(AccessLevel.NONE)
         private long lastAccess = System.currentTimeMillis();
+
+        public UserInfo(String login, Set<String> rightsAndRoles) {
+            this.login = login;
+            rightsAndRoles.forEach(rrs::add);
+        }
 
         public boolean updateLastAccess() throws Exception {
 
@@ -316,8 +340,17 @@ public class UserCrudService extends JsonCrudService {
             return true;
         }
 
-        public boolean isAccessible() throws Exception {
-            return lastAccess + tokenInfoTimeToLive <= System.currentTimeMillis() || !executeSynced(tokenMap, () -> tokenMap.containsKey(token));
+
+        public boolean isAccessible() {
+
+            if (!activeUserMap.containsKey(token)) {
+                return false;
+            } else if (lastAccess + tokenInfoTimeToLive < System.currentTimeMillis()) {
+                activeUserMap.remove(token);
+                return false;
+            } else {
+                return true;
+            }
         }
     }
 }

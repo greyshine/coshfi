@@ -3,7 +3,6 @@ package de.greyshine.coffeeshopfinder;
 import de.greyshine.coffeeshopfinder.entity.UserCrudService;
 import de.greyshine.coffeeshopfinder.entity.UserEntity;
 import de.greyshine.coffeeshopfinder.service.EmailService;
-import de.greyshine.coffeeshopfinder.utils.Utils;
 import de.greyshine.json.crud.JsonCrudService.Sync;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -96,11 +95,11 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
         }
 
         log.info("start-time: {}", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-        final long startuptime = System.currentTimeMillis() - appStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        final var startuptime = System.currentTimeMillis() - appStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         log.info("start-durance: {}ms", startuptime);
 
-        final String localPublicIpAddress = "?";
-        final String text = "Started on " + localPublicIpAddress + ", " + LocalDateTime.now();
+        final var localPublicIpAddress = "?";
+        final var text = "Started on " + localPublicIpAddress + ", " + LocalDateTime.now();
 
         emailService.sendEmail("coffeeshopfinder@web.de", text, null, text);
     }
@@ -109,21 +108,22 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
 
         if (userCrudService.isLogin("test")) {
 
-            final UserEntity user = userCrudService.getByLogin("test");
+            final var user = userCrudService.getByLogin("test");
             log.warn("test user exists: {}", user);
             return;
         }
 
-        final UserEntity user = new UserEntity();
+        final var user = new UserEntity();
         user.setLogin("test");
-        user.setPassword(Utils.toHash("test"));
+        user.setPassword("Test_123"); // wird im create gehashed
 
         user.setName("Test");
         user.setEmail("coffeeshopfinder@web.de");
         user.setAddress("Teststr. 1; D-55555 City");
 
-        final String id = userCrudService.create(user);
+        userCrudService.create(user);
 
+        user.addRightAndRole();
         user.setConfirmationCode(null);
         userCrudService.update(Sync.NONE, user);
 

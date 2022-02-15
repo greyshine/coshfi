@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import java.util.Set;
 
 @RestController
 @Slf4j
@@ -46,9 +48,13 @@ public class UserController {
 
     @PostMapping(value = "/api/login", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String login(@RequestBody LoginRequestBody loginRequestBody) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestBody loginRequestBody) {
+
         Utils.validateAndThrow(loginRequestBody);
-        return userCrudService.executeLogin(loginRequestBody.getLogin(), loginRequestBody.getPassword(), loginRequestBody.getConfirmationcode());
+
+        final var userInfo = userCrudService.executeLogin(loginRequestBody.getLogin(), loginRequestBody.getPassword(), loginRequestBody.getConfirmationcode());
+
+        return ResponseEntity.ok(new LoginResponse(userInfo));
     }
 
     @PostMapping(value = "/api/logout")
@@ -108,5 +114,26 @@ public class UserController {
     public static class RenewRequestBody {
         @NotBlank
         private String email;
+    }
+
+    public class LoginResponse {
+
+        private final UserCrudService.UserInfo userInfo;
+
+        private LoginResponse(UserCrudService.UserInfo userInfo) {
+            this.userInfo = userInfo;
+        }
+
+        public String getToken() {
+            return userInfo.getToken();
+        }
+
+        public String getLogin() {
+            return userInfo.getLogin();
+        }
+
+        public Set<String> getRrs() {
+            return userInfo.getRrs();
+        }
     }
 }

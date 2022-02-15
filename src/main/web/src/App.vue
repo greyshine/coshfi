@@ -7,7 +7,7 @@
     <nav class="main-nav">
       <img src="@/assets/logo.png" alt="CoffeeShopFinder" class="logo" @click="reload"/>
       <div class="logo" @click="reload">CoffeeShopFinder</div>
-      <div v-if="login!=null">{{ login }}&nbsp;-&nbsp;</div>
+      <div v-if="login!=null">{{ login }}</div>
       <Burger/>
     </nav>
 
@@ -22,6 +22,7 @@
 import axios from 'axios';
 import Burger from '@/components/Menu/Burger.vue';
 import Sidebar from '@/components/Menu/Sidebar.vue';
+import user from "@/assets/user";
 
 export default {
 
@@ -37,25 +38,30 @@ export default {
   }),
 
   created() {
-
-    this.$eventbus.$on('login', (login, token) => {
-      console.log('App login', login, token);
-      this.login = login;
-    });
-
-    this.$eventbus.$on('logout', () => {
-      //console.log('App logout', this.login);
-      this.login = null;
-    });
-
-    this.login = this.$getLogin();
-    console.log('login?', this.login);
-
     this.fetchInfo();
   },
 
   mounted() {
 
+    this.$eventbus.$on('login', user => this.login = user.login);
+    this.$eventbus.$on('logout', () => this.login = null);
+
+    setInterval(() => {
+
+      axios.get('/api/ping')
+          .then(response => {
+
+            //console.log('PING', user.token, response.data);
+
+            if (response.data === false && user.token != null) {
+
+              console.log('ping received logout command');
+
+              user.logout();
+              this.$eventbus.$emit('logout');
+            }
+          });
+    }, 5 * 60 * 1000);
   },
 
   methods: {
@@ -78,7 +84,6 @@ export default {
           }
       );
     }
-
   }
 }
 </script>

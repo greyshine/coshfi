@@ -6,7 +6,6 @@ import de.greyshine.coffeeshopfinder.web.builder.AddressBuilder;
 import de.greyshine.coffeeshopfinder.web.resultObjects.LocationDetailV1;
 import de.greyshine.coffeeshopfinder.web.resultObjects.LocationV1;
 import de.greyshine.coffeeshopfinder.web.resultObjects.LocationsV1;
-import de.greyshine.latlon.Latlon;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,16 +37,16 @@ public class MapController {
     @GetMapping(value = "/api/v1/location/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public LocationDetailV1 fetchLocation(@PathVariable(value = "id") String id) throws IOException {
 
-        final Location location = locationsService.get(id);
+        final var location = locationsService.get(id);
         if (location == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "location.id=" + id);
         }
 
         Assert.notNull(location, "No location found (id=" + id + ")");
 
-        final LocationDetailV1 locationDetailV1 = new LocationDetailV1(location2LocationV1(location));
+        final var locationDetailV1 = new LocationDetailV1(location2LocationV1(location));
 
-        final String ownerId = locationDetailV1.getLocation().getOwnerId();
+        final var ownerId = locationDetailV1.getLocation().getOwnerId();
 
         for (Location locationByOwner : locationsService.getByOwner(ownerId)) {
 
@@ -67,15 +66,15 @@ public class MapController {
 
         log.info("fetchLocations nw={}, se={}, z={}", nw, se, zoom);
 
-        final LocationsV1 locations = new LocationsV1();
+        final var locations = new LocationsV1();
 
         // TODO: remove false in IF
         if (false && zoom < 7) {
             return locations;
         }
 
-        final Latlon northWest = latlon(nw);
-        final Latlon southEast = latlon(se);
+        final var northWest = latlon(nw);
+        final var southEast = latlon(se);
 
         // TODO Locations kriegen ein Marker wo der Datenbestand herkommt. zum beispiel Unkrautkarten, Google oder
         //  selbst eingetragen.
@@ -83,7 +82,7 @@ public class MapController {
         // je nach Marker wird bei einem bestimmten zoom level < 8 nicht mehr angezeigt
         locationsService.handleAll(location -> {
 
-            final LocationV1 locationV1 = location2LocationV1(location);
+            final var locationV1 = location2LocationV1(location);
             locations.add(locationV1);
 
             return true;
@@ -95,7 +94,7 @@ public class MapController {
 
     private LocationV1 location2LocationV1(Location location) {
 
-        final LocationV1 locationV1 = new LocationV1();
+        final var locationV1 = new LocationV1();
 
         log.info("location2LocationV1 {}", location);
 

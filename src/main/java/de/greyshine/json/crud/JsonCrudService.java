@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -23,18 +20,13 @@ public class JsonCrudService {
         }
     };
 
-    public final Object SYNC_LOCAL = new Object() {
-        @Override
-        public String toString() {
-            return "SYNC for " + JsonCrudService.this;
-        }
-    };
+    private static final Map<Class, Object> LOCAL_SYNC_OBJECTS = new HashMap<>();
 
     private final JsonService jsonService;
 
     public <T extends Entity> T iterateSingle(Class<T> clazz, Sync sync, Utils.Function2<T, IterationResult> function) {
 
-        final List<T> items = iterate(clazz, sync, function);
+        final var items = iterate(clazz, sync, function);
 
         if (items.size() > 1) {
             log.warn("There is more than one result. Using only the first!");
@@ -55,8 +47,9 @@ public class JsonCrudService {
 
         jsonService.createDirIfNotExists(item.getClass());
 
-        Sync sync = Sync.NONE;
-        String id = item.getId();
+        var sync = Sync.NONE;
+        var id = item.getId();
+
         if (id == null) {
             id = UUID.randomUUID().toString();
             item.setId(id);
@@ -64,24 +57,24 @@ public class JsonCrudService {
             sync = Sync.LOCAL;
         }
 
-        return executeSynced(sync, () -> {
+        return executeSynced(sync, item.getClass(), () -> {
 
             item.updateCreated();
-            final long bytes = jsonService.save(item, false);
+            final var bytes = jsonService.save(item, false);
             log.debug("stored {}#{} with {} bytes", item.getClass().getCanonicalName(), item.getId(), bytes);
 
             return item.getId();
         });
     }
 
-    public <T extends Entity> T read(Class<T> entityClass, String id, Sync sync) {
+    public <T extends Entity> Optional<T> read(Class<T> entityClass, String id, Sync sync) {
 
         Assert.notNull(entityClass, "entity class is null");
         Assert.notNull(id, "id is null");
 
         jsonService.isExistingDir(entityClass);
 
-        return executeSynced(sync, () -> jsonService.load(entityClass, id));
+        return executeSynced(sync, entityClass, () -> jsonService.load(entityClass, id));
     }
 
     public <T extends Entity> void update(Sync sync, T item) {
@@ -89,7 +82,7 @@ public class JsonCrudService {
         Assert.notNull(item, "entity to update is null");
         Assert.isTrue(jsonService.isExistingDir(item.getClass()), "no existing directory for item: " + item);
 
-        executeSynced(sync, () -> {
+        executeSynced(sync, item.getClass(), () -> {
             item.updateUpdated();
             jsonService.save(item, true);
             return item;
@@ -120,45 +113,50 @@ public class JsonCrudService {
         Assert.isTrue(jsonService.isExistingDir(clazz), "no existing directory for " + clazz);
         Assert.isTrue(id != null && !id.isBlank(), "id must not be blank");
 
-        return executeSynced(sync, () -> jsonService.delete(clazz, id));
+        return executeSynced(sync, clazz, () -> jsonService.delete(clazz, id));
     }
 
     public <T extends Entity> List<T> iterate(Class<T> clazz, Sync sync, Utils.Function2<T, IterationResult> function) {
 
         Assert.notNull(clazz, "Class must be set");
-        sync = Sync.getDefault(sync);
         Assert.notNull(function, "Function must be set");
 
-        // TOD apply SYNC
-        final Iterator<String> idsIter = jsonService.getIds(clazz);
+        synchronized (Sync.getDefault(sync).getSyncObject(clazz)) {
 
-        final List<T> results = new ArrayList<>(0);
+            final var idsIter = jsonService.getIds(clazz);
+            final var results = new ArrayList<T>(0);
 
-        while (idsIter.hasNext()) {
+            while (idsIter.hasNext()) {
 
-            final String id = idsIter.next();
+                final var id = idsIter.next();
 
-            try {
+                try {
 
-                final T item = jsonService.load(clazz, id);
+                    final var item = jsonService.load(clazz, id);
 
-                IterationResult iterationResult = function.apply(item);
-                iterationResult = iterationResult != null ? iterationResult : IterationResult.IGNORE;
+                    if (item.isEmpty()) {
+                        log.warn("Expected to recive an item for id={}, class={}", id, clazz.getCanonicalName());
+                        continue;
+                    }
 
-                if (iterationResult.isUse()) {
-                    results.add(item);
+                    var iterationResult = function.apply(item.get());
+                    iterationResult = iterationResult != null ? iterationResult : IterationResult.IGNORE;
+
+                    if (iterationResult.isUse()) {
+                        results.add(item.get());
+                    }
+
+                    if (iterationResult.isQuit()) {
+                        break;
+                    }
+
+                } catch (Exception exception) {
+                    log.warn("Unable to handle item with ID={}", id, exception);
                 }
-
-                if (iterationResult.isQuit()) {
-                    break;
-                }
-
-            } catch (Exception exception) {
-                log.warn("Unable to handle item with ID={}", id, exception);
             }
-        }
 
-        return results;
+            return results;
+        }
     }
 
     public enum IterationResult {
@@ -191,30 +189,16 @@ public class JsonCrudService {
         return jsonService.serialize(item);
     }
 
-    protected Object getSyncObject(Sync sync) {
-        if (Sync.GLOBAL == sync) {
-            return SYNC_GLOBAL;
-        } else if (Sync.LOCAL == sync) {
-            return SYNC_LOCAL;
-        } else {
-            return null;
-        }
-    }
-
     @SneakyThrows
-    private <S> S executeSynced(Sync sync, Utils.Supplier2<S> supplier) {
+    private <S> S executeSynced(Sync sync, Class<?> clazz, Utils.Supplier2<S> supplier) {
 
         Assert.notNull(supplier, "No supplier given.");
 
-        Object syncObject = null;
-
-        if (Sync.GLOBAL == sync) {
-            syncObject = SYNC_GLOBAL;
-        } else if (Sync.LOCAL == sync) {
-            syncObject = SYNC_LOCAL;
-        } else {
+        if (Sync.isNone(sync)) {
             return supplier.get();
         }
+
+        final Object syncObject = sync.getSyncObject(clazz);
 
         synchronized (syncObject) {
             return supplier.get();
@@ -222,6 +206,7 @@ public class JsonCrudService {
     }
 
     public enum Sync {
+
         /**
          * All over locked of everything
          */
@@ -236,14 +221,43 @@ public class JsonCrudService {
          */
         NONE;
 
-        static boolean isNone(Sync sync) {
-            return NONE == sync || sync == null;
-        }
+        private static final Map<Class, Object> syncObjects = new HashMap<>();
 
         public static Sync getDefault(Sync sync) {
             return sync == null ? NONE : sync;
         }
+
+        public static boolean isNone(Sync sync) {
+            return sync == null || sync == Sync.NONE;
+        }
+
+        public Object getSyncObject(Class<?> clazz) {
+
+            if (this == NONE) {
+                return null;
+            } else if (this == GLOBAL) {
+                return SYNC_GLOBAL;
+            } else if (clazz == null) {
+                log.warn("recieved no class on LOCAL sync, will use GLOBAL sync");
+                return SYNC_GLOBAL;
+            }
+
+            Object syncObject = syncObjects.get(clazz);
+
+            if (syncObject == null) {
+
+                syncObject = new Object() {
+
+                    @Override
+                    public String toString() {
+                        return "LOCAL_SYNC:" + clazz.getCanonicalName();
+                    }
+                };
+
+                LOCAL_SYNC_OBJECTS.put(clazz, syncObject);
+            }
+
+            return syncObject;
+        }
     }
-
-
 }

@@ -11,7 +11,7 @@ public class DeAddressBuilder extends AddressBuilder {
 
         Assert.notNull(location, "location must not be null");
 
-        final StringBuilder sb = new StringBuilder();
+        final var sb = new StringBuilder();
 
         sb.append(getDefaultString(location.getStreet(), () -> "")).append('\n');
         sb.append(getDefaultString(location.getZip(), () -> "")).append(' ');

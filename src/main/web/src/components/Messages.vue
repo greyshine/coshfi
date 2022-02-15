@@ -144,7 +144,6 @@ div {
     li.error {
       color: $colorError
     }
-
   }
 }
 </style>

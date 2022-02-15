@@ -10,9 +10,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -27,6 +31,7 @@ public class JsonService {
 
     private static final Collection<String> EMPTY_STRINGS = Collections.emptySet();
     private static final FileFilter FILEFILTER_JSON = file -> file != null && file.getName().toLowerCase(Locale.ROOT).endsWith(".json");
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final File dataDir;
 
@@ -49,26 +54,23 @@ public class JsonService {
         objectMapper.registerModule(module);
     }
 
-    @PostConstruct
-    public void postConstruct() {
-    }
 
-    public <T extends Entity> T load(Class<T> entityClass, String id) throws IOException {
+    public <T extends Entity> Optional<T> load(Class<T> entityClass, String id) throws IOException {
 
         Assert.isTrue(isNotBlank(id), "ID to load is null");
 
-        final File jsonFile = getFile(entityClass, id);
+        final var jsonFile = getFile(entityClass, id);
         if (!jsonFile.exists() || jsonFile.isDirectory() || !jsonFile.canRead()) {
             throw new IOException("Cannot access " + jsonFile);
         }
 
-        final String s = Utils.readString(jsonFile);
+        final var s = Utils.readString(jsonFile);
 
         if (isBlank(s) || "null".equalsIgnoreCase(s.trim())) {
-            return null;
+            return Optional.empty();
         }
 
-        return objectMapper.readValue(s, entityClass);
+        return Optional.of(objectMapper.readValue(s, entityClass));
     }
 
     public <T extends Entity> File getFile(T item) {
@@ -84,9 +86,11 @@ public class JsonService {
         Assert.notNull(clazz, "Class is null");
         Assert.isTrue(isNotBlank(id), "ID is blank");
 
-        final File dir = new File(dataDir, clazz.getCanonicalName());
-        final File file = new File(dir, id + ".json");
+        final var dir = new File(dataDir, clazz.getCanonicalName());
+        final var file = new File(dir, id + ".json");
+
         log.debug("getFile({}, {}):{}, exists={}, {} bytes", clazz.getCanonicalName(), id, file.getAbsolutePath(), file.isFile(), !file.isFile() ? -1 : file.length());
+
         return file;
     }
 
@@ -95,42 +99,35 @@ public class JsonService {
         Assert.notNull(item, "item is null");
         Assert.isTrue(item.getId() != null && !item.getId().isBlank(), "item's id is null");
 
-        final String jsonString = serialize(item);
-        final File file = getFile(item);
+        final var jsonString = serialize(item);
+        final var file = getFile(item);
 
         if (!allowOverwrite) {
             Assert.isTrue(!file.exists(), "File already exists (file=" + file.getCanonicalPath() + ")");
         }
 
-        Utils.write(file, jsonString);
+        Files.writeString(file.toPath(), jsonString, StandardCharsets.UTF_8, StandardOpenOption.WRITE);
+        //Utils.write(file, jsonString);
 
         return file.length();
     }
 
     public <T> String serialize(T object) throws IOException {
 
-        if (object == null) {
-            return null;
-        }
-
+        Assert.notNull(object, "Object must not be null");
         Utils.validateAndThrow(object);
 
-        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final var os = new ByteArrayOutputStream();
         objectMapper.writeValue(os, object);
         return os.toString(StandardCharsets.UTF_8);
     }
 
     public <T> T deserialize(Class<T> clazz, String string) throws IOException {
 
-        if (string == null) {
-            return null;
-        }
+        Assert.notNull(clazz, "Class must not be null");
+        Assert.notNull(string, "String must not be null");
 
-        T result;
-
-        try (ByteArrayInputStream is = new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8))) {
-            result = objectMapper.readValue(string.getBytes(StandardCharsets.UTF_8), clazz);
-        }
+        final var result = objectMapper.readValue(string.getBytes(StandardCharsets.UTF_8), clazz);
 
         Utils.validateAndThrow(result);
 
@@ -139,8 +136,7 @@ public class JsonService {
 
     public <T extends Entity> boolean isExistingDir(Class<T> entityClass) {
 
-        final File dir = new File(dataDir, entityClass.getCanonicalName());
-
+        final var dir = new File(dataDir, entityClass.getCanonicalName());
         return dir.exists() && dir.isDirectory() && dir.canRead();
     }
 
@@ -201,7 +197,7 @@ public class JsonService {
 
         Assert.notNull(item, "item is null");
 
-        final String id = item.getId();
+        final var id = item.getId();
 
         if (isBlank(id)) {
             return false;

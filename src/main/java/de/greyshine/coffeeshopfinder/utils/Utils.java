@@ -7,7 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.*;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validation;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
@@ -28,6 +30,9 @@ public abstract class Utils {
     public final static DateTimeFormatter DTF_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     public final static DateTimeFormatter DTF_TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    public static final String[] EMPTY_STRINGS = new String[0];
+    public static final Object[] EMPTY_OBJECTS = new Object[0];
+
     private final static Random RANDOM = new Random();
 
     private final static Object SYNC_OBJECT = new Object();
@@ -45,7 +50,7 @@ public abstract class Utils {
 
         Assert.isTrue(amountLetters >= 0, "parameter must be >= 0");
 
-        final StringBuffer sb = new StringBuffer();
+        final var sb = new StringBuffer();
         for (int i = 0, l = amountLetters; i < l; i++) {
             sb.append(CC_CHARS[getRandom(0, CC_CHARS.length - 1)]);
         }
@@ -54,18 +59,18 @@ public abstract class Utils {
     }
 
     @SneakyThrows
-    public static String toHash(String s) {
+    public static String toHashSha256(String s) {
 
         Assert.notNull(s, "value to be hashed must not be null");
 
         s = s.length() + s;
 
-        final MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(s.getBytes(StandardCharsets.UTF_8));
+        final var messageDigest = MessageDigest.getInstance("SHA-256");
+        messageDigest.update(s.getBytes(StandardCharsets.UTF_8));
 
-        final byte[] hashBytes = md.digest();
+        final var hashBytes = messageDigest.digest();
 
-        final StringBuilder sb = new StringBuilder();
+        final var sb = new StringBuilder();
         for (byte b : hashBytes) {
             sb.append(String.format("%02x", b));
         }
@@ -73,12 +78,18 @@ public abstract class Utils {
         return sb.toString().toLowerCase(Locale.ROOT);
     }
 
+    public static String toHashPassword(String password) {
+        Assert.isTrue(isNotBlank(password), "value to be hashed must not be blank");
+        password = password.length() + password + password.length();
+        return toHashSha256(password);
+    }
+
     public static long write(File file, String s) throws IOException {
 
         Assert.notNull(file, "File is null");
         Assert.isTrue(!file.exists() || !file.isDirectory(), "File is a directory: " + file.getAbsolutePath());
 
-        try (FileWriter fw = new FileWriter(file)) {
+        try (var fw = new FileWriter(file)) {
             fw.write(s == null ? "" : s);
         }
 
@@ -104,13 +115,13 @@ public abstract class Utils {
             throw new ConstraintViolationException("Cannot validate null", Collections.emptySet());
         }
 
-        final Set<ConstraintViolation<T>> violations = validate(object);
+        final var violations = validate(object);
 
         if (violations.isEmpty()) {
             return;
         }
 
-        final String info;
+        var info = "No fruther information available";
 
         if (violations.size() == 1) {
 
@@ -122,7 +133,7 @@ public abstract class Utils {
         }
 
         if (log.isDebugEnabled()) {
-            log.warn("{} violations on {}:", violations.size(), object);
+            log.warn("{}; {} violations on {}:", info, violations.size(), object);
             for (ConstraintViolation cv : violations) {
                 log.warn("{}", cv);
             }
@@ -137,10 +148,10 @@ public abstract class Utils {
             return Collections.emptySet();
         }
 
-        final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        final Validator validator = factory.getValidator();
+        final var factory = Validation.buildDefaultValidatorFactory();
+        final var validator = factory.getValidator();
 
-        final Set<ConstraintViolation<T>> violations = validator.validate(object);
+        final var violations = validator.validate(object);
 
         if (log.isInfoEnabled()) {
             violations.forEach(v -> log.debug("{}", v));
@@ -305,7 +316,13 @@ public abstract class Utils {
 
     public static String toString(Object object) {
 
-        // TODO: make Runnabke be more extensive logged
+        // TODO: make Exception be more extensive logged
+        if (object instanceof Throwable) {
+
+            final var throwable = (Throwable) object;
+            final var message = throwable.getMessage();
+            object = throwable.getClass().getCanonicalName() + (message == null ? "" : "; " + message);
+        }
 
 
         return object == null ? "null" : String.valueOf(object);

@@ -22,7 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Controller
@@ -30,6 +32,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class IndexController {
 
     private final UserCrudService userCrudService;
+
+    private AtomicLong pingCalls = new AtomicLong(0);
 
     @Value("${app.version}")
     private String version;
@@ -47,7 +51,7 @@ public class IndexController {
 
         if (isNotBlank(sslForFreeName)) {
 
-            final File file = Utils.getFile(new File(sslForFreeName));
+            final var file = Utils.getFile(new File(sslForFreeName));
             log.info("loading sslForFree-file: {}", file);
 
             sslForFreeContent = Utils.readString(file);
@@ -81,10 +85,19 @@ public class IndexController {
     @ResponseBody
     public boolean ping(@RequestHeader(value = "TOKEN", required = false) String token) {
 
-        log.debug("ping: token={}", token);
+        token = isBlank(token) ? null : token.trim();
+
+        pingCalls.addAndGet(1L);
+
+        log.info("ping {}: token={}", pingCalls.get(), token == null ? null : "'" + token + "'");
+
+        if (token != null && pingCalls.get() % 5 == 0) {
+            log.warn("testwise logout {}", token);
+            userCrudService.logout(token);
+        }
 
         if (token != null) {
-            return userCrudService.updateToken(token);
+            return userCrudService.updateUserInfo(token);
         }
 
         return true;
