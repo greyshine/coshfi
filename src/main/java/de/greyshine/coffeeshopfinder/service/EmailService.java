@@ -19,6 +19,7 @@ import javax.annotation.PostConstruct;
 import javax.mail.MessagingException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
 import java.util.Collections;
@@ -94,10 +95,10 @@ public class EmailService {
         templateFile = Utils.getFile(templateFile);
         Assert.isTrue(templateFile.isFile(), "The file seems not to exist: " + templateFile);
 
-        final var content = Utils.readString(templateFile);
+        final var content = Files.readString(templateFile.toPath(), StandardCharsets.UTF_8);//Utils.readString(templateFile);
 
-        var subject = content.substring(0, content.indexOf('\n')).trim();
-        var message = content.substring(content.indexOf('\n') + 1).trim();
+        var subject = content.substring(0, content.indexOf('\n')).strip();
+        var message = content.substring(content.indexOf('\n') + 1).strip();
 
         for (InlineContent inlineContent : inlineContents) {
             final var k = "${" + inlineContent.variable + "}";

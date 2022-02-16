@@ -38,7 +38,7 @@ public class Latlon {
                 throw new IllegalArgumentException("unexpected format");
             }
 
-            return new Latlon(new BigDecimal(ps[0].trim()), new BigDecimal(ps[1].trim()));
+            return new Latlon(new BigDecimal(ps[0].strip()), new BigDecimal(ps[1].strip()));
 
         } catch (Exception e) {
             throw new IllegalArgumentException("cannot evaluate: \"" + s + "\"; " + e.getMessage());
@@ -85,7 +85,7 @@ public class Latlon {
     }
 
     public Latlon lon(String l) {
-        return lon(lon == null ? null : new BigDecimal(l.trim()));
+        return lon(lon == null ? null : new BigDecimal(l.strip()));
     }
 
     public Latlon lat(BigDecimal l) {
@@ -94,7 +94,7 @@ public class Latlon {
     }
 
     public Latlon lat(String lat) {
-        return lat(lat == null ? null : new BigDecimal(lat.trim()));
+        return lat(lat == null ? null : new BigDecimal(lat.strip()));
     }
 
     public boolean isValid() {

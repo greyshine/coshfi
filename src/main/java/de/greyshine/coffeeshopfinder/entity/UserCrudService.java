@@ -12,12 +12,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static de.greyshine.coffeeshopfinder.utils.Utils.*;
+import static de.greyshine.coffeeshopfinder.utils.Utils.executeSynced;
+import static de.greyshine.coffeeshopfinder.utils.Utils.getRandomLetters;
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.springframework.util.Assert.*;
 
@@ -33,6 +39,8 @@ public class UserCrudService extends JsonCrudService {
     private final ValidationService validationService;
     private final long tokenInfoTimeToLive = 10 * 60 * 1000;
 
+    private boolean isTerminated = false;
+
     public UserCrudService(@Autowired JsonService jsonService, @Autowired ValidationService validationService, @Autowired EmailService emailService) {
 
         super(jsonService);
@@ -43,6 +51,25 @@ public class UserCrudService extends JsonCrudService {
 
     public static Map<String, UserInfo> getTokenMap() {
         return activeUserMap;
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+
+        final ExecutorService executor = Executors.newFixedThreadPool(1);
+
+        executor.submit(() -> {
+
+            while (!isTerminated) {
+                Utils.sleep(6000, () -> isTerminated);
+                removeInvalidTokens();
+            }
+        });
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        isTerminated = true;
     }
 
     /**
@@ -212,30 +239,26 @@ public class UserCrudService extends JsonCrudService {
     }
 
     @SneakyThrows
-    public Optional<UserInfo> getTokenInfo(String token) {
+    public Optional<UserInfo> getUserInfo(String token) {
         return executeSynced(activeUserMap, () -> Optional.ofNullable(activeUserMap.get(token)));
     }
 
-    public void removeInvalidTokens() throws Exception {
+    public int removeInvalidTokens() {
+        final AtomicInteger i = new AtomicInteger(0);
+        synchronized (activeUserMap) {
+            new HashSet<>(activeUserMap.values()).stream()
+                    .filter(userInfo -> !userInfo.isTokenTimeValid())
+                    .peek(userInfo -> log.info("removing invalid token: {}", userInfo))
+                    .peek(userInfo -> i.addAndGet(1))
+                    .map(userInfo -> userInfo.getToken())
+                    .forEach(token -> activeUserMap.remove(token));
+        }
 
-        executeSynced(activeUserMap, () -> {
+        if (i.get() > 0) {
+            log.info("Removed {} UserInfos", i.get());
+        }
 
-            activeUserMap.values().forEach(tokenInfo -> {
-
-                final var isValid = executeSafe(() -> tokenInfo.isAccessible(), null);
-
-                if (Boolean.TRUE.equals(isValid)) {
-                    return;
-                } else if (isValid == null) {
-                    log.error("Failure on getting valid state of token: " + tokenInfo);
-                    return;
-                }
-
-                activeUserMap.remove(tokenInfo.getToken());
-                log.info("removed invalid token: {}", tokenInfo);
-            });
-
-        });
+        return i.get();
     }
 
     @SneakyThrows
@@ -271,7 +294,7 @@ public class UserCrudService extends JsonCrudService {
 
         isTrue(isNotBlank(email), "Email must not be blank");
 
-        final var emailLc = email.trim().toLowerCase(Locale.ROOT);
+        final var emailLc = email.strip().toLowerCase(Locale.ROOT);
 
         final var userEntities =
                 iterate(UserEntity.class, Sync.LOCAL, (userEntity) -> emailLc.equals(userEntity.getEmail().toLowerCase(Locale.ROOT)) ? IterationResult.USE_QUIT : IterationResult.IGNORE_QUIT);
@@ -332,7 +355,7 @@ public class UserCrudService extends JsonCrudService {
 
         public boolean updateLastAccess() throws Exception {
 
-            if (!isAccessible()) {
+            if (!isTokenTimeValid()) {
                 return false;
             }
 
@@ -341,7 +364,7 @@ public class UserCrudService extends JsonCrudService {
         }
 
 
-        public boolean isAccessible() {
+        public boolean isTokenTimeValid() {
 
             if (!activeUserMap.containsKey(token)) {
                 return false;

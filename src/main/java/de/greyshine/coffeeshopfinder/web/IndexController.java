@@ -20,6 +20,8 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,7 +56,7 @@ public class IndexController {
             final var file = Utils.getFile(new File(sslForFreeName));
             log.info("loading sslForFree-file: {}", file);
 
-            sslForFreeContent = Utils.readString(file);
+            sslForFreeContent = Files.readString(file.toPath(), StandardCharsets.UTF_8);
             Assert.isTrue(!sslForFreeContent.isEmpty(), "no content in " + Utils.getFile(file));
             log.debug("loaded sslForFree-file successfully:\n{}", sslForFreeContent);
         }
@@ -85,16 +87,9 @@ public class IndexController {
     @ResponseBody
     public boolean ping(@RequestHeader(value = "TOKEN", required = false) String token) {
 
-        token = isBlank(token) ? null : token.trim();
+        token = isBlank(token) ? null : token.strip();
 
         pingCalls.addAndGet(1L);
-
-        log.info("ping {}: token={}", pingCalls.get(), token == null ? null : "'" + token + "'");
-
-        if (token != null && pingCalls.get() % 5 == 0) {
-            log.warn("testwise logout {}", token);
-            userCrudService.logout(token);
-        }
 
         if (token != null) {
             return userCrudService.updateUserInfo(token);

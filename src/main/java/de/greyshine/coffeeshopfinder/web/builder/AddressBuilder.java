@@ -55,13 +55,13 @@ public abstract class AddressBuilder {
 
             final StringBuilder sb = new StringBuilder();
 
-            doIfNotBlank(location.getStreet(), street -> sb.append(street.trim()).toString());
-            doIfNotBlank(location.getZip(), zip -> sb.append(", ").append(zip.trim()).toString());
-            doIfNotBlank(location.getCity(), city -> sb.append(", ").append(city.trim()).toString());
-            doIfNotBlank(location.getState(), state -> sb.append(", ").append(state.trim()).toString());
-            doIfNotBlank(location.getCountry(), country -> sb.append(", ").append(country.trim()).toString());
+            doIfNotBlank(location.getStreet(), street -> sb.append(street.strip()).toString());
+            doIfNotBlank(location.getZip(), zip -> sb.append(", ").append(zip.strip()).toString());
+            doIfNotBlank(location.getCity(), city -> sb.append(", ").append(city.strip()).toString());
+            doIfNotBlank(location.getState(), state -> sb.append(", ").append(state.strip()).toString());
+            doIfNotBlank(location.getCountry(), country -> sb.append(", ").append(country.strip()).toString());
 
-            final String result = sb.toString().trim();
+            final String result = sb.toString().strip();
             return !result.startsWith(", ") ? result : result.substring(2);
         }
     }

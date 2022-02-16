@@ -1,12 +1,10 @@
 package de.greyshine.coffeeshopfinder.web;
 
 import de.greyshine.coffeeshopfinder.entity.UserCrudService;
-import de.greyshine.coffeeshopfinder.web.annotation.Token;
 import de.greyshine.coffeeshopfinder.web.annotation.Tokenized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,21 +12,29 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 @Configuration
 @Slf4j
 public class TokenInterceptor implements HandlerInterceptor {
 
+    private static final AtomicLong COUNT_REQUESTS = new AtomicLong(0);
+
     @Autowired
     private UserCrudService userService;
+
+    private static final Map<Tokenized, Set<String>> tokenizedRights = new HashMap<>();
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
-        log.debug("request {}, {}", handler.getClass().getCanonicalName(), handler);
+        final long requestCount = COUNT_REQUESTS.addAndGet(1);
+
+        log.debug("request {}; {}, handler={}", requestCount, handler.getClass().getCanonicalName(), handler);
 
         final var handlerMethod = handler instanceof HandlerMethod ? (HandlerMethod) handler : null;
 
@@ -36,33 +42,79 @@ public class TokenInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        final var method = handlerMethod.getMethod();
-        //log.info("{}", method);
+        final var tokenized = handlerMethod.getMethod().getDeclaredAnnotation(Tokenized.class);
+
+        if (tokenized == null) {
+            return true;
+        }
 
         final var token = trimToNull(request.getHeader("TOKEN"));
-        updateToken(method.getDeclaredAnnotation(Tokenized.class), token);
 
-        // Check @Token parameter
-        var i = -1;
-        for (Annotation[] annotations : method.getParameterAnnotations()) {
+        final var isAllowed = userService.getUserInfo(token)
+                .map(userInfo -> checkUserAllowed(tokenized, userInfo))
+                .orElse(false);
 
-            i++;
+        if (!isAllowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
 
-            for (var i2 = 0; i2 < annotations.length; i2++) {
+        updateToken(tokenized, token);
 
-                // log.info( "[{}] {} {}", i, i2, annotations[i2] );
+        return true;
+    }
 
-                if (annotations[i2].annotationType() == Token.class && String.class.isAssignableFrom(method.getParameterTypes()[i])) {
+    private boolean checkUserAllowed(Tokenized tokenized, UserCrudService.UserInfo userInfo) {
 
-                    // Scheint nicht zu gehen, evtl. mit AspectOrientatedProgramming versuchen...
-                    final MethodParameter[] methodParameters = handlerMethod.getMethodParameters();
-                    //log.info( "Hit [{}][{}], token={}, mp={}", i, i2, token, methodParameters[i].getParameter() );
+        if (tokenized == null || tokenized.rrs().strip().isBlank()) {
+            return true;
+        } else if (userInfo == null) {
+            return false;
+        } else if (!userInfo.isTokenTimeValid()) {
+            return false;
+        }
+
+        final var tokenizedRights = getTokenizedRights(tokenized);
+
+        if (tokenizedRights.isEmpty()) {
+            return true;
+        }
+
+        for (var neededRight : tokenizedRights) {
+            for (var userRight : userInfo.getRrs()) {
+                if (isBlank(userRight)) {
+                    continue;
+                } else if (userRight.strip().toUpperCase(Locale.ROOT).equals(neededRight)) {
+                    return true;
                 }
-
             }
         }
 
-        return true;
+
+        return false;
+    }
+
+    private Set<String> getTokenizedRights(Tokenized tokenized) {
+
+        if (tokenized == null || tokenized.rrs().strip().isBlank()) {
+            return Collections.emptySet();
+        } else if (tokenizedRights.containsKey(tokenized)) {
+            return tokenizedRights.get(tokenized);
+        }
+
+        final var rights = new HashSet<String>();
+        for (String s : tokenized.rrs().toUpperCase(Locale.ROOT).split(",", -1)) {
+
+            s = s.strip();
+
+            if (s.isBlank()) {
+                continue;
+            }
+
+            rights.add(s.toUpperCase(Locale.ROOT));
+        }
+
+        tokenizedRights.put(tokenized, rights);
+        return rights;
     }
 
     private void updateToken(Tokenized tokenized, String token) throws Exception {
@@ -72,7 +124,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             return;
         }
 
-        final var userInfo = this.userService.getTokenInfo(token);
+        final var userInfo = this.userService.getUserInfo(token);
 
         if (!userInfo.isPresent()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);

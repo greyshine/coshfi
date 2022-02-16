@@ -7,6 +7,7 @@ import de.greyshine.coffeeshopfinder.utils.Utils;
 import de.greyshine.latlon.Latlon;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -64,9 +65,9 @@ public class JsonService {
             throw new IOException("Cannot access " + jsonFile);
         }
 
-        final var s = Utils.readString(jsonFile);
+        final var s = Files.readString(jsonFile.toPath(), StandardCharsets.UTF_8);
 
-        if (isBlank(s) || "null".equalsIgnoreCase(s.trim())) {
+        if (isBlank(s) || "null".equalsIgnoreCase(s.strip())) {
             return Optional.empty();
         }
 
@@ -107,12 +108,11 @@ public class JsonService {
         }
 
         Files.writeString(file.toPath(), jsonString, StandardCharsets.UTF_8, StandardOpenOption.WRITE);
-        //Utils.write(file, jsonString);
 
         return file.length();
     }
 
-    public <T> String serialize(T object) throws IOException {
+    public <T> String serialize(@Nullable T object) throws IOException {
 
         Assert.notNull(object, "Object must not be null");
         Utils.validateAndThrow(object);

@@ -10,11 +10,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -82,31 +83,6 @@ public abstract class Utils {
         Assert.isTrue(isNotBlank(password), "value to be hashed must not be blank");
         password = password.length() + password + password.length();
         return toHashSha256(password);
-    }
-
-    public static long write(File file, String s) throws IOException {
-
-        Assert.notNull(file, "File is null");
-        Assert.isTrue(!file.exists() || !file.isDirectory(), "File is a directory: " + file.getAbsolutePath());
-
-        try (var fw = new FileWriter(file)) {
-            fw.write(s == null ? "" : s);
-        }
-
-        return file.length();
-    }
-
-    public static String readString(File file) throws IOException {
-        return readString(file, StandardCharsets.UTF_8);
-    }
-
-    public static String readString(File file, Charset charset) throws IOException {
-
-        Assert.notNull(file, "File is null");
-        Assert.isTrue(!file.isDirectory(), "File is a directory: " + file.getAbsolutePath());
-        Assert.isTrue(file.canRead(), "File cannote be read: " + file.getAbsolutePath());
-
-        return Files.readString(file.toPath(), charset != null ? charset : StandardCharsets.UTF_8);
     }
 
     public static <T> void validateAndThrow(T object) {
@@ -191,7 +167,7 @@ public abstract class Utils {
     }
 
     public static String getDefaultString(String s, Supplier<String> supplier) {
-        return isNotBlank(s) ? s.trim() : supplier == null ? s : supplier.get();
+        return isNotBlank(s) ? s.strip() : supplier == null ? s : supplier.get();
     }
 
     public static String doIfNotBlank(String arg, Function<String, String> function) {
@@ -221,14 +197,14 @@ public abstract class Utils {
     }
 
     public static String trimToLowercaseNull(String s) {
-        if (s == null || (s = s.trim()).isBlank()) {
+        if (s == null || (s = s.strip()).isBlank()) {
             return null;
         }
         return s.toLowerCase(Locale.ROOT);
     }
 
     public static String trimToUppercaseNull(String s) {
-        if (s == null || (s = s.trim()).isBlank()) {
+        if (s == null || (s = s.strip()).isBlank()) {
             return null;
         }
         return s.toUpperCase(Locale.ROOT);
@@ -361,7 +337,43 @@ public abstract class Utils {
 
     @SneakyThrows
     public static String getUrlencoded(String value) {
-        return value == null ? null : URLEncoder.encode(value, "UTF-8");
+        return value == null ? null : URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    public static void sleep(long millisToWait) {
+        sleep(millisToWait, null);
+    }
+
+    public static void sleep(long millisToWait, Stopper stopper) {
+
+        final var end = System.currentTimeMillis() + millisToWait;
+
+        final var checktime = stopper == null ? 1000 : Math.max(stopper.checkInterval(), 1);
+        var stopByStopper = false;
+
+        while (System.currentTimeMillis() < end) {
+
+            millisToWait = Math.min(checktime, end - System.currentTimeMillis());
+
+            if (millisToWait < 1) {
+                break;
+            }
+
+            if (stopByStopper = stopper.isStop()) {
+                log.info("Stopped by Stopper actively waiting.");
+                break;
+            }
+
+            try {
+                Thread.sleep(millisToWait);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        if (stopper != null) {
+            stopper.finished(stopByStopper);
+        }
     }
 
     @FunctionalInterface
@@ -411,6 +423,19 @@ public abstract class Utils {
         default <V> Function2<T, V> andThen(Function2<? super R, ? extends V> after) {
             Objects.requireNonNull(after);
             return (T t) -> after.apply(apply(t));
+        }
+    }
+
+    @FunctionalInterface
+    public interface Stopper {
+
+        boolean isStop();
+
+        default long checkInterval() {
+            return 1_000;
+        }
+
+        default void finished(boolean isStopped) {
         }
     }
 

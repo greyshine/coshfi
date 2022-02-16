@@ -50,7 +50,7 @@ public class ValidationService {
 
         if (isBlank(password)) {
             throw new ValidationFailure(password, PASSWORD_BLANK);
-        } else if (!password.equals(password.trim())) {
+        } else if (!password.equals(password.strip())) {
             throw new ValidationFailure(password, PASSWORD_CRITERIA_MATCH);
         } else if (password.length() < PASSWORD_MINLENGTH) {
             throw new ValidationFailure(password, PASSWORD_CRITERIA_MATCH);
@@ -106,9 +106,13 @@ public class ValidationService {
     public void validateUsername(String user) throws ValidationFailure {
 
         validateNotBlank(user, USER_BLANK);
+        user = user.strip();
 
         if (!USER_PATTERN.matcher(user).matches()) {
             throw new ValidationFailure(user, USER_BAD_FORMAT);
+        }
+
+        if ("admin".equalsIgnoreCase(user)) {
         }
     }
 

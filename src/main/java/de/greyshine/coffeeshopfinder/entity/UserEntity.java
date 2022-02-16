@@ -66,7 +66,7 @@ public class UserEntity extends Entity {
             if (isBlank(rr)) {
                 continue;
             }
-            this.rightsAndRoles.add(rr.trim());
+            this.rightsAndRoles.add(rr.strip());
         }
 
         return this;

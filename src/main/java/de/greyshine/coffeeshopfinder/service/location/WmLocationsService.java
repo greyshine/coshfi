@@ -68,7 +68,7 @@ public class WmLocationsService {
             return null;
         }
 
-        switch (type.trim().toLowerCase(Locale.ROOT)) {
+        switch (type.strip().toLowerCase(Locale.ROOT)) {
 
             case "delivery":
             case "store":
@@ -150,12 +150,12 @@ public class WmLocationsService {
                 continue;
             }
 
-            location.setStreet(isBlank(location.getStreet()) || "null".equalsIgnoreCase(location.getStreet().trim()) ? null : location.getStreet().trim());
-            location.setZip(isBlank(location.getZip()) || "null".equalsIgnoreCase(location.getZip().trim()) ? null : location.getZip().trim());
-            location.setCity(isBlank(location.getCity()) || "null".equalsIgnoreCase(location.getCity().trim()) ? null : location.getCity().trim());
-            location.setState(isBlank(location.getState()) || "null".equalsIgnoreCase(location.getState().trim()) ? null : location.getState().trim());
-            location.setCountry(isBlank(location.getCountry()) || "null".equalsIgnoreCase(location.getCountry().trim()) ? null : location.getCountry().trim());
-            location.setEmail(isBlank(location.getEmail()) || location.getEmail().toLowerCase(Locale.ROOT).contains("@weedmaps.") ? null : location.getEmail().trim());
+            location.setStreet(isBlank(location.getStreet()) || "null".equalsIgnoreCase(location.getStreet().strip()) ? null : location.getStreet().strip());
+            location.setZip(isBlank(location.getZip()) || "null".equalsIgnoreCase(location.getZip().strip()) ? null : location.getZip().strip());
+            location.setCity(isBlank(location.getCity()) || "null".equalsIgnoreCase(location.getCity().strip()) ? null : location.getCity().strip());
+            location.setState(isBlank(location.getState()) || "null".equalsIgnoreCase(location.getState().strip()) ? null : location.getState().strip());
+            location.setCountry(isBlank(location.getCountry()) || "null".equalsIgnoreCase(location.getCountry().strip()) ? null : location.getCountry().strip());
+            location.setEmail(isBlank(location.getEmail()) || location.getEmail().toLowerCase(Locale.ROOT).contains("@weedmaps.") ? null : location.getEmail().strip());
 
             if (location.getCountry() != null) {
 
@@ -191,7 +191,7 @@ public class WmLocationsService {
                         break;
                 }
 
-                if (isBlank(location.getCountry()) && "CA".equals(location.getState()) && location.getZip().trim().startsWith("9")) {
+                if (isBlank(location.getCountry()) && "CA".equals(location.getState()) && location.getZip().strip().startsWith("9")) {
 
                     location.setCountry("US");
 
