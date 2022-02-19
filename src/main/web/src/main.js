@@ -13,7 +13,7 @@ import Login from '@/components/forms/Login.vue'
 import Register from '@/components/forms/Register.vue'
 import Infos from '@/components/Infos.vue'
 import Location from '@/components/Location.vue'
-import Profile from '@/components/Profile.vue'
+import Account from '@/components/forms/Account';
 
 // Make BootstrapVue available throughout your project
 Vue.use(BootstrapVue)
@@ -23,6 +23,8 @@ Vue.use(IconsPlugin)
 Vue.use(VueRouter)
 
 Vue.config.productionTip = false;
+
+Vue.prototype.$info = {};
 
 Vue.prototype.$eventbus = new Vue([]);
 
@@ -36,7 +38,7 @@ const routes = [
   {name: 'login', path: '/login', component: Login},
   {name: 'infos', path: '/infos', component: Infos},
   {name: 'location', path: '/location/:locationId', component: Location},
-  {name: 'profile', path: '/profile', component: Profile}
+  {name: 'account', path: '/account', component: Account}
 ];
 
 const router = new VueRouter({
@@ -53,11 +55,10 @@ new Vue({
   render: h => h(App)
 }).$mount('#app')
 
-
 axios.interceptors.request.use(function (config) {
 
   config.headers.TOKEN = user.token == null ? '' : user.token;
-  console.log('config.headers.TOKEN', typeof config.headers.TOKEN, config.headers.TOKEN);
+  //console.log('config.headers.TOKEN', typeof config.headers.TOKEN, config.headers.TOKEN);
 
   return config;
 });

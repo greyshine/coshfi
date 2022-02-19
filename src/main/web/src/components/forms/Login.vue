@@ -10,7 +10,7 @@
 
       <Messages ref="messages"/>
 
-      <b-form id="form">
+      <b-form id="form" @keyup.13="!isSubmitDisabled && submitLogin()">
 
         <b-form-invalid-feedback :state="formSubmitSuccess" v-html="lang.get('form.login.fail')"/>
 
@@ -110,6 +110,11 @@ export default {
     //console.log('Login.mounted() router', this.$router);
     //new URLSearchParams(window.location.search);
     //console.log('Login MOUNTED user:', user);
+
+    if (this.$user.isLoggedIn()) {
+      this.$router.push('/');
+    }
+
   },
 
   computed: {
@@ -178,6 +183,8 @@ export default {
 
                   this.password = '';
                   this.email = '';
+
+                  this.$user.clear();
 
                 } else {
 

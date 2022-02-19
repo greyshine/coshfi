@@ -68,12 +68,6 @@ public class JsonCrudService {
     }
 
     public <T extends Entity> Optional<T> read(Class<T> entityClass, String id, Sync sync) {
-
-        Assert.notNull(entityClass, "entity class is null");
-        Assert.notNull(id, "id is null");
-
-        jsonService.isExistingDir(entityClass);
-
         return executeSynced(sync, entityClass, () -> jsonService.load(entityClass, id));
     }
 

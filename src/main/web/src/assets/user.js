@@ -42,6 +42,7 @@ class User {
 
     logout() {
 
+        this.login = null;
         this.token = null;
         this.rrs = [];
 
@@ -67,6 +68,20 @@ class User {
         this.login = item.login != null ? item.login : this.login;
         this.token = item.token;
         this.rrs = item.rrs;
+    }
+
+    clear() {
+
+        const login = this.login;
+
+        this.login = null;
+        this.token = null;
+        this.rrs = [];
+        this.store();
+
+        if (login != null) {
+            console.log('cleared user', login);
+        }
     }
 }
 

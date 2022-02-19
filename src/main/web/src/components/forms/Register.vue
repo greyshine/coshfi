@@ -104,7 +104,11 @@ export default {
   }),
 
   mounted() {
-    console.log('mounted');
+    console.log('mounted()');
+
+    if (this.$user.isLoggedIn()) {
+      this.$router.push('/');
+    }
   },
 
   computed: {

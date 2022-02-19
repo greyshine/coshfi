@@ -34,55 +34,61 @@ export default {
   },
 
   data: ()=>({
+    intervalTime: 2 * 60 * 1_000,
     login: null
   }),
 
   created() {
-    this.fetchInfo();
+
+    console.log('usr', this.$user);
+
+    this.$eventbus.$on('login', user => this.login = user.login);
+    this.$eventbus.$on('logout', () => {
+      this.login = null;
+      this.$router.push('/login');
+    });
   },
 
   mounted() {
 
-    this.$eventbus.$on('login', user => this.login = user.login);
-    this.$eventbus.$on('logout', () => this.login = null);
+    this.login = this.$user.login;
+
+    axios.get('/info')
+        .then(
+            response => {
+              //console.log('server.info', response.data);
+              this.$info = response.data;
+              this.$eventbus.$emit('info', response.data);
+            },
+            error => {
+              console.log('error', error);
+            }
+        );
 
     setInterval(() => {
 
       axios.get('/api/ping')
           .then(response => {
 
-            //console.log('PING', user.token, response.data);
+            // console.log('PING', user.token, response.data);
 
             if (response.data === false && user.token != null) {
 
               console.log('ping received logout command');
 
+              this.login = null;
               user.logout();
+
               this.$eventbus.$emit('logout');
             }
           });
-    }, 5 * 60 * 1000);
+    }, this.intervalTime);
   },
 
   methods: {
 
     reload() {
       document.location.href = '/';
-    },
-
-    fetchInfo() {
-
-      // fetch version
-      axios.get('/info')
-      .then(
-          response => {
-            console.log('server.info', response.data);
-          },
-          error => {
-            console.log('error', error);
-            console.log('response', error.response);
-          }
-      );
     }
   }
 }

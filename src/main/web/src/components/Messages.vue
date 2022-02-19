@@ -16,8 +16,7 @@ export default {
     errorIndices: []
   }),
 
-  mounted() {
-
+  created() {
     this.$eventbus.$on('messages', (...args) => {
 
       //console.log('messages.vue on messages', args);
@@ -51,7 +50,9 @@ export default {
           return;
       }
     });
+  },
 
+  mounted() {
   },
 
   methods: {

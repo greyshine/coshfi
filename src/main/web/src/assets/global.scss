@@ -1,12 +1,16 @@
 $spaceSm: 5px;
 $space: 15px;
 $spaceLg: 30px;
-$fontSizeSmall: 0.1em;
+$fontSizeSmall: 0.6em;
 $colorFg: #A9D24E;
 $colorBg: #183100;
 $colorSmall: #2C4E22;
 $colorError: #BD0000;
 $colorLink: #A9D24E;
+
+*.fontSizeSmall {
+  font-size: $fontSizeSmall;
+}
 
 body {
   border: 0;
@@ -22,8 +26,15 @@ div {
   color: $colorFg;
 }
 
-div.small {
-  fontSizeSmall: $fontSizeSmall;
+.small {
+  font-size: $fontSizeSmall;
+}
+
+.greyed {
+  color: $colorSmall;
+}
+
+.grayed {
   color: $colorSmall;
 }
 
@@ -109,4 +120,15 @@ textarea.error::placeholder {
 .formFieldDescription {
   margin: $spaceLg $space $spaceSm;
 }
+
+ul.hidden {
+
+  padding-left: 0;
+
+  li {
+    list-style: none;
+  }
+}
+
+
 

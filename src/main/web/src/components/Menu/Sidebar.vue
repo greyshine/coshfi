@@ -34,7 +34,7 @@
           </li>
           <li v-if="login" @click.prevent="closeSidebarPanel">
             <hr/>
-            <router-link :to="{name: 'profile'}">Profile</router-link>
+            <router-link :to="{name: 'account'}">Account</router-link>
           </li>
           <li v-if="login" @click.prevent="closeSidebarPanel($event, 'logout')">
             Logout
@@ -57,10 +57,16 @@ export default {
     login: false
   }),
 
-  mounted() {
+  created() {
     this.$eventbus.$on('main-menu', () => this.isPanelOpen = true);
     this.$eventbus.$on('login', () => this.login = true);
     this.$eventbus.$on('logout', () => this.login = false);
+  },
+
+  mounted() {
+
+    this.login = this.$user.token != null;
+
   },
 
   methods: {
@@ -133,7 +139,7 @@ div.sidebar {
 
   a:hover {
     color: $colorBg;
-    font-size: larger;
+    font-weight: bold;
   }
 
   a:active {

@@ -3,19 +3,23 @@
 </template>
 
 <script>
-
 export default {
 
   data: () => ({}),
 
+  created() {
+  },
+
   mounted() {
   },
+
+  computed: {},
 
   methods: {}
 }
 
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 
 </style>

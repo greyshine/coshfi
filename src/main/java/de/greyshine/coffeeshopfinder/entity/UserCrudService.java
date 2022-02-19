@@ -10,14 +10,16 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,7 +40,7 @@ public class UserCrudService extends JsonCrudService {
     private final EmailService emailService;
     private final ValidationService validationService;
     private final long tokenInfoTimeToLive = 10 * 60 * 1000;
-
+    private final Set<String> illegalNames = new HashSet<>();
     private boolean isTerminated = false;
 
     public UserCrudService(@Autowired JsonService jsonService, @Autowired ValidationService validationService, @Autowired EmailService emailService) {
@@ -54,10 +56,17 @@ public class UserCrudService extends JsonCrudService {
     }
 
     @PostConstruct
+    @SneakyThrows
     public void postConstruct() {
 
-        final ExecutorService executor = Executors.newFixedThreadPool(1);
+        final URI illegalNamesUri = ClassLoader.getSystemClassLoader().getResource("illegal-names.txt").toURI();
+        Files.readAllLines(Path.of(illegalNamesUri)).stream()
+                .map(String::strip)
+                .filter(line -> !line.trim().isBlank())
+                .map(String::toLowerCase)
+                .forEach(illegalNames::add);
 
+        final var executor = Executors.newFixedThreadPool(1);
         executor.submit(() -> {
 
             while (!isTerminated) {
@@ -83,13 +92,15 @@ public class UserCrudService extends JsonCrudService {
         notNull(userEntity, UserEntity.class.getCanonicalName() + " is null");
         isNull(userEntity.getId(), UserEntity.class.getCanonicalName() + " is null");
         isTrue(validationService.isValidLogin(userEntity.getLogin()), UserEntity.class.getCanonicalName() + " illegal login: " + userEntity.getLogin());
+        isTrue(isLegalWord(userEntity.getLogin()), "Login is taken");
         isTrue(validationService.isValidPassword(userEntity.getPassword()), UserEntity.class.getCanonicalName() + " illegal password: " + userEntity.getPassword());
 
         isTrue(!isLoginOrName(userEntity.getLogin(), userEntity.getName()), "Login or user is used: login=" + userEntity.getLogin() + ", user=" + userEntity.getName());
-
         isTrue(!isLogin(userEntity.getLogin()), "Login already exists: " + userEntity.getLogin());
         isTrue(!isName(userEntity.getName()), "User already exists: " + userEntity.getName());
 
+
+        userEntity.setLogin(userEntity.getLogin().strip());
         userEntity.setEmail(userEntity.getEmail().toLowerCase(Locale.ROOT));
         userEntity.setPassword(Utils.toHashPassword(userEntity.getPassword()));
 
@@ -116,12 +127,32 @@ public class UserCrudService extends JsonCrudService {
             return IterationResult.IGNORE;
         });
 
-        Assert.isNull(existingUserEntity, "There is already an user existing: " + existingUserEntity);
+        isNull(existingUserEntity, "There is already an user existing: " + existingUserEntity);
 
         userEntity.setId(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now()) + "_" + Long.toString(IDS.addAndGet(1), 16));
         userEntity.setConfirmationCode(createConfirmationCode());
 
         return super.create(userEntity);
+    }
+
+    public boolean isLegalWord(String login) {
+
+        login = Utils.trimToLowercaseNull(login);
+        if (login == null) {
+            return false;
+        }
+        login = login.replaceAll("[^a-z]", "");
+
+        for (String word : illegalNames) {
+            word = word.strip();
+            if (word.isBlank() || word.charAt(0) == '#') {
+                continue;
+            } else if (login.indexOf(word) > -1) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public boolean isLogin(final String login) {
@@ -273,11 +304,11 @@ public class UserCrudService extends JsonCrudService {
 
     public UserEntity getByLogin(String login) {
 
-        Assert.notNull(login, "Login must not be null");
+        notNull(login, "Login must not be null");
 
         final var users = iterate(UserEntity.class, Sync.LOCAL, user -> login.equals(user.getLogin()) ? IterationResult.USE_QUIT : IterationResult.IGNORE);
 
-        Assert.isTrue(users.isEmpty() || users.size() == 1, "Unexpected amount of users with login=" + login);
+        isTrue(users.isEmpty() || users.size() == 1, "Unexpected amount of users with login=" + login);
 
         return users.isEmpty() ? null : users.get(0);
     }
@@ -330,12 +361,41 @@ public class UserCrudService extends JsonCrudService {
         });
     }
 
+    private String buildToken(String login) {
+
+        isTrue(isNotBlank(login), "login must not be blank");
+
+        final long s = System.currentTimeMillis();
+
+        final var sb = new StringBuffer();
+
+        for (byte b : login.getBytes(StandardCharsets.UTF_8)) {
+            sb.append(b < 0 ? b * -1 : b);
+        }
+        sb.append(login.length());
+
+        final var l = Long.valueOf(sb.toString());
+        sb.setLength(0);
+
+        sb.append(Long.toString(l, 16));
+        sb.append(Utils.getRandom(0, 1) == 0 ? '-' : '/');
+        sb.append(Long.toString(System.currentTimeMillis(), 16));
+        sb.append(Utils.getRandom(0, 1) == 0 ? '-' : '/');
+        sb.append(getRandomLetters(32 * 3));
+
+        final String token = sb.toString();
+
+        log.info("token build time: {}ms", System.currentTimeMillis() - s);
+
+        return token;
+    }
+
     @Data
     @RequiredArgsConstructor
     public class UserInfo {
 
         private final LocalDateTime creation = LocalDateTime.now();
-        private final String token = getRandomLetters(32 * 4);
+        private final String token;
 
         @NonNull
         private final String login;
@@ -350,6 +410,8 @@ public class UserCrudService extends JsonCrudService {
 
         public UserInfo(String login, Set<String> rightsAndRoles) {
             this.login = login;
+            this.token = buildToken
+                    (login);
             rightsAndRoles.forEach(rrs::add);
         }
 

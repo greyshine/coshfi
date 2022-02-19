@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import de.greyshine.latlon.Latlon;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
@@ -55,23 +56,22 @@ public class JsonService {
         objectMapper.registerModule(module);
     }
 
+    @SneakyThrows
+    public <T extends Entity> Optional<T> load(Class<T> entityClass, String id) {
 
-    public <T extends Entity> Optional<T> load(Class<T> entityClass, String id) throws IOException {
-
+        Assert.notNull(entityClass, "Object's class to load is null");
         Assert.isTrue(isNotBlank(id), "ID to load is null");
 
         final var jsonFile = getFile(entityClass, id);
-        if (!jsonFile.exists() || jsonFile.isDirectory() || !jsonFile.canRead()) {
-            throw new IOException("Cannot access " + jsonFile);
+        if (jsonFile == null || !jsonFile.exists()) {
+            return Optional.empty();
         }
 
         final var s = Files.readString(jsonFile.toPath(), StandardCharsets.UTF_8);
 
-        if (isBlank(s) || "null".equalsIgnoreCase(s.strip())) {
-            return Optional.empty();
-        }
-
-        return Optional.of(objectMapper.readValue(s, entityClass));
+        return isBlank(s) || "null".equalsIgnoreCase(s.strip())
+                ? Optional.empty()
+                : Optional.of(objectMapper.readValue(s, entityClass));
     }
 
     public <T extends Entity> File getFile(T item) {
@@ -91,11 +91,13 @@ public class JsonService {
         final var file = new File(dir, id + ".json");
 
         log.debug("getFile({}, {}):{}, exists={}, {} bytes", clazz.getCanonicalName(), id, file.getAbsolutePath(), file.isFile(), !file.isFile() ? -1 : file.length());
+        Assert.isTrue(!file.exists() || file.isFile(), "File is not a proper File: " + file.getAbsolutePath());
 
         return file;
     }
 
-    public <T extends Entity> long save(T item, boolean allowOverwrite) throws IOException {
+    @SneakyThrows
+    public <T extends Entity> long save(T item, boolean allowOverwrite) {
 
         Assert.notNull(item, "item is null");
         Assert.isTrue(item.getId() != null && !item.getId().isBlank(), "item's id is null");
@@ -103,16 +105,15 @@ public class JsonService {
         final var jsonString = serialize(item);
         final var file = getFile(item);
 
-        if (!allowOverwrite) {
-            Assert.isTrue(!file.exists(), "File already exists (file=" + file.getCanonicalPath() + ")");
-        }
+        Assert.isTrue(file != null && !allowOverwrite, "File already exists (file=" + file.getCanonicalPath() + ")");
 
         Files.writeString(file.toPath(), jsonString, StandardCharsets.UTF_8, StandardOpenOption.WRITE);
 
         return file.length();
     }
 
-    public <T> String serialize(@Nullable T object) throws IOException {
+    @SneakyThrows
+    public <T> String serialize(@Nullable T object) {
 
         Assert.notNull(object, "Object must not be null");
         Utils.validateAndThrow(object);
@@ -155,6 +156,20 @@ public class JsonService {
         Assert.isTrue(dir.exists() && dir.isDirectory() && dir.canRead(), "Cannot access " + dir + " after trying to create");
 
         log.info("created repository dir: {}", dir);
+    }
+
+    @SneakyThrows
+    public <T extends Entity> boolean markDelete(Class<T> clazz, String id) {
+
+        Assert.notNull(clazz, "class is null");
+        Assert.notNull(id, "id is null");
+
+        return load(clazz, id).stream()
+                .peek(Entity::updateDeleted)
+                .peek(entity -> this.save(entity, true))
+                .map(entity -> true)
+                .findFirst()
+                .orElse(false);
     }
 
     public <T extends Entity> boolean delete(Class<T> clazz, String id) {
@@ -209,6 +224,4 @@ public class JsonService {
         }
         return file.exists();
     }
-
-
 }
