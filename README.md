@@ -14,6 +14,22 @@ coffeeshopfinder.de
 Jeder kann Links posten. Dann einfache Verwaltung für mich (Radakteure). Evtl. mit Schlagworten/Tags versehen z.B: für
 Land, Themenbereich,...
 
+
+
+## Updating 
+
+
+
+## Running on local development
+
+### Updating node
+When starting the vue frontend (happened to me on local development) and an error is displayed like  
+`ERROR You are using Node v13.10.1, but vue-cli-service requires Node ^12.0.0 || >= 14.0.0. Please upgrade your Node version.`
+
+Check here for example: https://medium.com/macoclock/update-your-node-js-on-your-mac-in-2020-948948c1ffb2
+
+And do see here: https://stackoverflow.com/a/65796287/845117
+
 ## Running on a server
 
     java -jar coffeeshopfinder-X.Y.jar --dir.home=<datadir>  --server.port=8080 

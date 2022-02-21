@@ -143,6 +143,11 @@ public class UserCrudService extends JsonCrudService {
         }
         login = login.replaceAll("[^a-z]", "");
 
+        // TODO create pass on startup and creating first user
+        if (!login.isBlank()) {
+            return true;
+        }
+
         for (String word : illegalNames) {
             word = word.strip();
             if (word.isBlank() || word.charAt(0) == '#') {

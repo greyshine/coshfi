@@ -54,6 +54,8 @@ public class EmailService {
     @Bean
     public JavaMailSender getJavaMailSender() {
 
+        // TODO build DummySender which only writes to files on disc if no other is available
+
         Assert.notNull(configuration, "No configuration is set");
         Assert.isTrue(isNotBlank(configuration.getUsername()), "Username is blank");
 

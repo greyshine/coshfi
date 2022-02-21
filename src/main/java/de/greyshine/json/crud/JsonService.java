@@ -104,10 +104,18 @@ public class JsonService {
 
         final var jsonString = serialize(item);
         final var file = getFile(item);
+        final var isExisting = file.exists() && file.isFile();
 
-        Assert.isTrue(file != null && !allowOverwrite, "File already exists (file=" + file.getCanonicalPath() + ")");
+        Assert.isTrue(!isExisting || allowOverwrite, "File already exists (file=" + file.getCanonicalPath() + ")");
+
+        if ( !file.exists() ) {
+            final var isCreated = file.createNewFile();
+            Assert.isTrue( isCreated, "File could not be created. Reason unknown..." );
+        }
 
         Files.writeString(file.toPath(), jsonString, StandardCharsets.UTF_8, StandardOpenOption.WRITE);
+
+        log.info("saved {}", file.toPath());
 
         return file.length();
     }
