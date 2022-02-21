@@ -1,0 +1,11 @@
+Account confirmation code www.coffeshopfinder.de
+
+<h1>Hello ${name}</h1>
+
+<div>here you find your confirmation code: <a href="${link}">${confirmationcode}</a></div>
+
+<div>Press the link (or copy it to the browser) for completing your registration and entering the plattform the first time:</div>
+
+<a href="${link}">${link}</a>
+
+<div>Enjoy!</div>

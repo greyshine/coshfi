@@ -1,0 +1,11 @@
+Konto Bestätigung for www.coffeshopfinder.de
+
+<h1>Hallo ${name}</h1>
+
+<div>hier ist der Bestätigungscode: <a href="${link}">${confirmationcode}</a></div>
+
+<div>Klick den Link oder gebe ihn manuell ein um die Registrierung abzuschliessen und Dich das erste mal einzuloggen:</div>
+
+<a href="${link}">${link}</a>
+
+<div>Hab Spaß!</div>
