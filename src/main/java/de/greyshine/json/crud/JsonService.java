@@ -180,7 +180,7 @@ public class JsonService {
                 .orElse(false);
     }
 
-    public <T extends Entity> boolean delete(Class<T> clazz, String id) {
+    public <T extends Entity> boolean deleteFile(Class<T> clazz, String id) {
 
         Assert.notNull(clazz, "class is null");
         Assert.notNull(id, "id is null");
@@ -190,11 +190,15 @@ public class JsonService {
             return false;
         }
 
-        file.delete();
+        final var deleted = file.delete();
 
-        Assert.isTrue(!file.exists(), "File (id=" + id + ")was not deleted");
-
-        return true;
+        if (!deleted || file.exists()) {
+            log.error("File {}, id={} was not deleted", clazz.getCanonicalName(), id);
+            return true;
+        } else {
+            log.info("File {}, id={} was deleted", clazz.getCanonicalName(), id);
+            return true;
+        }
     }
 
     public <T extends Entity> Iterator<String> getIds(Class<T> entityClass) {

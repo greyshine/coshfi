@@ -1,9 +1,12 @@
 package de.greyshine.coffeeshopfinder.service;
 
 import de.greyshine.coffeeshopfinder.EmailConfiguration;
+import de.greyshine.coffeeshopfinder.entity.EmailEntity;
 import de.greyshine.coffeeshopfinder.utils.Utils;
+import de.greyshine.json.crud.JsonCrudService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -32,19 +35,25 @@ import static org.apache.commons.lang3.StringUtils.*;
 @Slf4j
 public class EmailService {
 
-    private EmailConfiguration configuration;
+    private final EmailConfiguration configuration;
 
-    @Autowired
-    private JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
 
-    public EmailService(@Autowired EmailConfiguration configuration) {
+    private final JsonCrudService jsonCrudService;
+
+    public EmailService(@Autowired EmailConfiguration configuration,
+                        @Autowired JavaMailSender javaMailSender,
+                        @Autowired JsonCrudService jsonCrudService) {
+
         this.configuration = configuration;
+        this.javaMailSender = javaMailSender;
+        this.jsonCrudService = jsonCrudService;
     }
 
     @PostConstruct
     public void postConstruct() {
 
-        Assert.notNull(configuration.getTemplateDir(), "no email template dir");
+        Assert.notNull(configuration.getTemplateDir(), "no email template dir: " + configuration.getTemplateDir());
         final var emailTemplateDir = Utils.getFile(configuration.getTemplateDir());
         Assert.isTrue(emailTemplateDir.isDirectory() && emailTemplateDir.canRead(), "Cannot access email template dir: " + emailTemplateDir.getAbsolutePath());
 
@@ -141,11 +150,13 @@ public class EmailService {
 
         attachments = attachments != null ? attachments : Collections.emptySet();
 
-        if (!configuration.isActive()) {
-            log.warn("email is not active. No sending of email to {}, {}", receiverEmail, subject);
-            log.debug("email-content would be ({} attachments):\n{}", attachments.size(), htmlBody);
-            return;
-        }
+        final EmailEntity emailEntity = new EmailEntity();
+        emailEntity.setReceiver(receiverEmail);
+        emailEntity.setSubject(subject);
+        emailEntity.setContentHtml(htmlBody);
+        emailEntity.setContentText(textBody);
+        emailEntity.addAttachments(attachments);
+
 
         final var message = javaMailSender.createMimeMessage();
 
@@ -174,14 +185,33 @@ public class EmailService {
             helper.addAttachment(attachment.name, () -> new FileInputStream(attachment.file), attachment.contentType);
         }
 
+        final String emailEntityId = jsonCrudService.create(emailEntity);
+
+        // TODO: save
+        if (!configuration.isActive()) {
+            log.warn("email is not active. No sending of email to {}, {}", receiverEmail, subject);
+            log.debug("email-content would be ({} attachments):\n{}", attachments.size(), htmlBody);
+            return;
+        }
+
+        jsonCrudService.create(emailEntity);
+
         javaMailSender.send(message);
+
+        jsonCrudService.read(EmailEntity.class, emailEntityId, JsonCrudService.Sync.LOCAL)
+                .map(EmailEntity::markSent)
+                .ifPresent(e -> jsonCrudService.update(JsonCrudService.Sync.LOCAL, e));
     }
+
 
     @AllArgsConstructor
     public static class Attachment {
 
+        @Getter
         private final String name;
+        @Getter
         private final String contentType;
+        @Getter
         private final File file;
 
         @SneakyThrows

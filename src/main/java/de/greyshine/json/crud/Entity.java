@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @EqualsAndHashCode
 public abstract class Entity {
@@ -28,19 +29,31 @@ public abstract class Entity {
     @Getter
     private String deleted;
 
-    public Entity updateCreated() {
+    public void beforeCreate() {
+    }
+
+    public void beforeUpdate() {
+    }
+
+    public void beforeDelete(boolean physicalDelete) {
+    }
+
+
+    final void updateCreated() {
+
+        if (this.id == null || this.id.isBlank()) {
+            this.id = UUID.randomUUID().toString();
+        }
+
         this.created = LocalDateTime.now().format(DTF);
-        return this;
     }
 
-    public Entity updateUpdated() {
+    final void updateUpdated() {
         this.updated = LocalDateTime.now().format(DTF);
-        return this;
     }
 
-    public Entity updateDeleted() {
+    final void updateDeleted() {
         this.deleted = LocalDateTime.now().format(DTF);
-        return this;
     }
 
     /**

@@ -5,13 +5,14 @@ coffeeshopfinder.de
 ----
 
 ## TODO
+( )-7 Setup Vermittler Geschäft, Multilevelmarketing
 ( )-6 Check canada stores: https://www.tweed.com/en/find-a-store
 ( )-5 Comments including images, enable for easy simple modaration  
-( )-4 Payment Paypal, Amazaon (https://pay.amazon.de/blog/H%C3%A4ufige-gesch%C3%A4ftliche-Fragen-zu-Amazon-Pay)  
+( )-4 Payment Paypal, Amaz´on (https://pay.amazon.de/blog/H%C3%A4ufige-gesch%C3%A4ftliche-Fragen-zu-Amazon-Pay)  
 ( )-3 SpringSecurity, Turn off SessionId, use own construct  
 ( )-2 IP, Location Lookup for each Session  
 ( )-1 Links bzgl. Legalisierung.  
-Jeder kann Links posten. Dann einfache Verwaltung für mich (Radakteure). Evtl. mit Schlagworten/Tags versehen z.B: für
+Jeder kann Links posten. Dann einfache Verwaltung für mich (Redakteure). Evtl. mit Schlagworten/Tags versehen z.B: für
 Land, Themenbereich,...
 
 
@@ -43,6 +44,11 @@ And do see here: https://stackoverflow.com/a/65796287/845117
         wm.json 
 
 ## Setup securely with a domain
+
+https://cybercafe.dev/thisisunsafe-bypassing-chrome-security-warnings/
+
+- https://www.bluehost.com/resources/how-to-fix-the-https-not-secure-message-in-chrome/
+- https://techcult.com/fix-ssl-certificate-error-google-chrome/#Method_1_Add_Trusted_Sites_to_the_Security_List
 
 ### Proxy with nginx on a server
 

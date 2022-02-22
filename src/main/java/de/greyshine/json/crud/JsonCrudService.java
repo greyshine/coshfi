@@ -5,9 +5,11 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import java.util.*;
+
+import static org.springframework.util.Assert.isTrue;
+import static org.springframework.util.Assert.notNull;
 
 @Service
 @Slf4j
@@ -37,29 +39,21 @@ public class JsonCrudService {
 
     public JsonCrudService(@Autowired JsonService jsonService) {
 
-        Assert.notNull(jsonService, "JsonService must not be null");
+        notNull(jsonService, "JsonService must not be null");
         this.jsonService = jsonService;
     }
 
     public <T extends Entity> String create(T item) {
 
-        Assert.notNull(item, "item to persist is null");
+        notNull(item, "item to persist is null");
 
         jsonService.createDirIfNotExists(item.getClass());
 
-        var sync = Sync.NONE;
-        var id = item.getId();
+        return executeSynced(Sync.NONE, item.getClass(), () -> {
 
-        if (id == null) {
-            id = UUID.randomUUID().toString();
-            item.setId(id);
-        } else {
-            sync = Sync.LOCAL;
-        }
-
-        return executeSynced(sync, item.getClass(), () -> {
-
+            item.beforeCreate();
             item.updateCreated();
+
             final var bytes = jsonService.save(item, false);
             log.debug("stored {}#{} with {} bytes", item.getClass().getCanonicalName(), item.getId(), bytes);
 
@@ -73,10 +67,12 @@ public class JsonCrudService {
 
     public <T extends Entity> void update(Sync sync, T item) {
 
-        Assert.notNull(item, "entity to update is null");
-        Assert.isTrue(jsonService.isExistingDir(item.getClass()), "no existing directory for item: " + item);
+        notNull(item, "entity to update is null");
+        isTrue(jsonService.isExistingDir(item.getClass()), "no existing directory for item: " + item);
 
         executeSynced(sync, item.getClass(), () -> {
+
+            item.beforeUpdate();
             item.updateUpdated();
             jsonService.save(item, true);
             return item;
@@ -85,7 +81,7 @@ public class JsonCrudService {
 
     public <T extends Entity> String upsert(Sync sync, T item) {
 
-        Assert.notNull(item, "Item is null");
+        notNull(item, "Item is null");
 
         synchronized (Sync.getDefault(sync)) {
 
@@ -101,21 +97,57 @@ public class JsonCrudService {
         }
     }
 
-    public <T extends Entity> boolean delete(Sync sync, Class<T> clazz, String id) {
+    /**
+     * @param sync
+     * @param clazz
+     * @param id
+     * @param physicalDelete
+     * @param <T>
+     * @return
+     */
+    public <T extends Entity> boolean delete(Sync sync, Class<T> clazz, String id, boolean physicalDelete) {
 
-        Assert.notNull(clazz, "");
-        Assert.isTrue(jsonService.isExistingDir(clazz), "no existing directory for " + clazz);
-        Assert.isTrue(id != null && !id.isBlank(), "id must not be blank");
+        notNull(clazz, "");
+        isTrue(jsonService.isExistingDir(clazz), "no existing directory for " + clazz);
+        isTrue(id != null && !id.isBlank(), "id must not be blank");
 
-        return executeSynced(sync, clazz, () -> jsonService.delete(clazz, id));
+        final Utils.Supplier2<Boolean> deleteSupplier = () -> {
+
+            final Optional<T> optEntity = read(clazz, id, sync);
+
+            if (optEntity.isEmpty()) {
+                return false;
+            }
+
+            final T entity = optEntity.get();
+
+            entity.updateDeleted();
+            entity.beforeDelete(physicalDelete);
+            entity.updateDeleted();
+
+            update(sync, optEntity.get());
+
+            if (physicalDelete) {
+
+                return jsonService.deleteFile(clazz, id);
+
+            } else {
+
+                optEntity.get().updateDeleted();
+
+                return true;
+            }
+        };
+
+        return executeSynced(sync, clazz, deleteSupplier);
     }
 
     public <T extends Entity> List<T> iterate(Class<T> clazz, Sync sync, Utils.Function2<T, IterationResult> function) {
 
-        Assert.notNull(clazz, "Class must be set");
-        Assert.notNull(function, "Function must be set");
+        notNull(clazz, "Class must be set");
+        notNull(function, "Function must be set");
 
-        synchronized (Sync.getDefault(sync).getSyncObject(clazz)) {
+        final Utils.Supplier2<List<T>> supplier = () -> {
 
             final var idsIter = jsonService.getIds(clazz);
             final var results = new ArrayList<T>(0);
@@ -150,7 +182,9 @@ public class JsonCrudService {
             }
 
             return results;
-        }
+        };
+
+        return executeSynced(sync, clazz, supplier);
     }
 
     public enum IterationResult {
@@ -186,16 +220,16 @@ public class JsonCrudService {
     @SneakyThrows
     private <S> S executeSynced(Sync sync, Class<?> clazz, Utils.Supplier2<S> supplier) {
 
-        Assert.notNull(supplier, "No supplier given.");
+        notNull(supplier, "No supplier given.");
 
-        if (Sync.isNone(sync)) {
+        var syncObject = Sync.getDefault(sync).getSyncObject(clazz);
+
+        if (Sync.NONE == syncObject) {
             return supplier.get();
-        }
-
-        final Object syncObject = sync.getSyncObject(clazz);
-
-        synchronized (syncObject) {
-            return supplier.get();
+        } else {
+            synchronized (syncObject) {
+                return supplier.get();
+            }
         }
     }
 
@@ -222,7 +256,19 @@ public class JsonCrudService {
         }
 
         public static boolean isNone(Sync sync) {
-            return sync == null || sync == Sync.NONE;
+            return sync == null || sync.isNone();
+        }
+
+        public boolean isNone() {
+            return this == Sync.NONE;
+        }
+
+        public boolean isGlobal() {
+            return this == Sync.GLOBAL;
+        }
+
+        public boolean isLocal() {
+            return this == Sync.LOCAL;
         }
 
         public Object getSyncObject(Class<?> clazz) {
@@ -232,11 +278,11 @@ public class JsonCrudService {
             } else if (this == GLOBAL) {
                 return SYNC_GLOBAL;
             } else if (clazz == null) {
-                log.warn("recieved no class on LOCAL sync, will use GLOBAL sync");
+                log.warn("received no class on LOCAL sync, will use GLOBAL sync");
                 return SYNC_GLOBAL;
             }
 
-            Object syncObject = syncObjects.get(clazz);
+            var syncObject = syncObjects.get(clazz);
 
             if (syncObject == null) {
 

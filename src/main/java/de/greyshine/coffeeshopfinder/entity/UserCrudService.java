@@ -39,6 +39,7 @@ public class UserCrudService extends JsonCrudService {
 
     private final EmailService emailService;
     private final ValidationService validationService;
+
     private final long tokenInfoTimeToLive = 10 * 60 * 1000;
     private final Set<String> illegalNames = new HashSet<>();
     private boolean isTerminated = false;

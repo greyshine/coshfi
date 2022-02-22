@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -374,6 +375,17 @@ public abstract class Utils {
         if (stopper != null) {
             stopper.finished(stopByStopper);
         }
+    }
+
+    @SneakyThrows
+    public static String toBase64(File file) {
+
+        Assert.isTrue(file != null && file.isFile() && file.canRead(),
+                "Cannot read file: " + (file == null ? null : file.getAbsolutePath()));
+
+        // Taken from https://stackoverflow.com/a/58903654/845117
+        final byte[] fileContent = Files.readAllBytes(file.toPath());
+        return Base64.getEncoder().encodeToString(fileContent);
     }
 
     @FunctionalInterface
