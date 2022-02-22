@@ -3,7 +3,6 @@ package de.greyshine.coffeeshopfinder.service;
 import de.greyshine.coffeeshopfinder.EmailConfiguration;
 import de.greyshine.coffeeshopfinder.entity.EmailEntity;
 import de.greyshine.coffeeshopfinder.utils.Utils;
-import de.greyshine.json.crud.JsonCrudService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -39,15 +38,11 @@ public class EmailService {
 
     private final JavaMailSender javaMailSender;
 
-    private final JsonCrudService jsonCrudService;
-
     public EmailService(@Autowired EmailConfiguration configuration,
-                        @Autowired JavaMailSender javaMailSender,
-                        @Autowired JsonCrudService jsonCrudService) {
+                        @Autowired JavaMailSender javaMailSender) {
 
         this.configuration = configuration;
         this.javaMailSender = javaMailSender;
-        this.jsonCrudService = jsonCrudService;
     }
 
     @PostConstruct
@@ -56,6 +51,7 @@ public class EmailService {
         Assert.notNull(configuration.getTemplateDir(), "no email template dir: " + configuration.getTemplateDir());
         final var emailTemplateDir = Utils.getFile(configuration.getTemplateDir());
         Assert.isTrue(emailTemplateDir.isDirectory() && emailTemplateDir.canRead(), "Cannot access email template dir: " + emailTemplateDir.getAbsolutePath());
+
 
         log.info("email-templates: {}", emailTemplateDir);
     }
@@ -150,12 +146,7 @@ public class EmailService {
 
         attachments = attachments != null ? attachments : Collections.emptySet();
 
-        final EmailEntity emailEntity = new EmailEntity();
-        emailEntity.setReceiver(receiverEmail);
-        emailEntity.setSubject(subject);
-        emailEntity.setContentHtml(htmlBody);
-        emailEntity.setContentText(textBody);
-        emailEntity.addAttachments(attachments);
+
 
 
         final var message = javaMailSender.createMimeMessage();
@@ -185,7 +176,13 @@ public class EmailService {
             helper.addAttachment(attachment.name, () -> new FileInputStream(attachment.file), attachment.contentType);
         }
 
-        final String emailEntityId = jsonCrudService.create(emailEntity);
+        final EmailEntity emailEntity = new EmailEntity();
+        emailEntity.setReceiver(receiverEmail);
+        emailEntity.setSubject(subject);
+        emailEntity.setContentHtml(htmlBody);
+        emailEntity.setContentText(textBody);
+        emailEntity.addAttachments(attachments);
+        //final String emailEntityId = jsonCrudService.create(emailEntity);
 
         // TODO: save
         if (!configuration.isActive()) {
@@ -194,13 +191,15 @@ public class EmailService {
             return;
         }
 
-        jsonCrudService.create(emailEntity);
+        //jsonCrudService.create(emailEntity);
 
         javaMailSender.send(message);
 
+        /*
         jsonCrudService.read(EmailEntity.class, emailEntityId, JsonCrudService.Sync.LOCAL)
                 .map(EmailEntity::markSent)
                 .ifPresent(e -> jsonCrudService.update(JsonCrudService.Sync.LOCAL, e));
+        */
     }
 
 
