@@ -23,6 +23,7 @@ public class EmailEntity extends Entity {
     private static final AtomicLong IDS = new AtomicLong(0);
 
     private final List<Attachment> attachments = new ArrayList<>();
+
     private LocalDateTime sentTime;
     private String receiver;
     private String subject;

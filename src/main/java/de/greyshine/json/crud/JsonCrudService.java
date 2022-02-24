@@ -161,7 +161,12 @@ public class JsonCrudService {
                     final var item = jsonService.load(clazz, id);
 
                     if (item.isEmpty()) {
-                        log.warn("Expected to recive an item for id={}, class={}", id, clazz.getCanonicalName());
+
+                        log.warn("Expected to receive an item for id={}, class={}", id, clazz.getCanonicalName());
+                        continue;
+
+                    } else if ( item.get().isDeleted() ) {
+                        // ignore items marked as deleted
                         continue;
                     }
 
