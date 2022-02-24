@@ -54,14 +54,17 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
     @Value("${testuser:false}")
     private boolean testuser;
 
-    @Autowired
-    private UserCrudService userCrudService;
+    private final UserCrudService userCrudService;
 
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
 
-    public CoffeeShopFinder(@Autowired Environment environment) {
+    public CoffeeShopFinder(Environment environment,
+                            EmailService emailService,
+                            UserCrudService userCrudService) {
+
         this.environment = environment;
+        this.emailService = emailService;
+        this.userCrudService = userCrudService;
     }
 
     public static void main(String[] args) {

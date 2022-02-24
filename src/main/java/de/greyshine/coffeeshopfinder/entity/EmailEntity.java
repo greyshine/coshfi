@@ -4,6 +4,8 @@ import de.greyshine.coffeeshopfinder.service.EmailService;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import de.greyshine.json.crud.Entity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,10 +15,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class EmailEntity extends Entity {
 
-    public static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
-    static final AtomicLong IDS = new AtomicLong(0);
+    private static final DateTimeFormatter IDS_DTF = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
+    private static final AtomicLong IDS = new AtomicLong(0);
+
     private final List<Attachment> attachments = new ArrayList<>();
     private LocalDateTime sentTime;
     private String receiver;
@@ -28,7 +33,7 @@ public class EmailEntity extends Entity {
 
     @Override
     public void beforeCreate() {
-        setId(LocalDateTime.now().format(DTF) + "-" + Long.toString(IDS.getAndAdd(1), 16));
+        setId(LocalDateTime.now().format(IDS_DTF) + "-" + Long.toString(IDS.getAndAdd(1), 16));
     }
 
     public EmailEntity markSent() {
@@ -64,7 +69,7 @@ public class EmailEntity extends Entity {
             return this;
         }
 
-        attachments.forEach(attachment -> addAttachment(attachment));
+        attachments.forEach(this::addAttachment);
 
         return this;
     }

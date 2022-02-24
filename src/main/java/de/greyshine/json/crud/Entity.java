@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.LocalDateTime;
@@ -14,20 +15,23 @@ import java.util.UUID;
 @EqualsAndHashCode
 public abstract class Entity {
 
-    public static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    public static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    public static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Getter
     @Setter
     @NotBlank(message = "id is mandatory")
     private String id;
 
-    @NotBlank(message = "created is mandatory")
+    @NotNull(message = "created is mandatory")
     @Getter
-    private String created = LocalDateTime.now().format(DTF);
+    private LocalDateTime created = LocalDateTime.now();
+
     @Getter
-    private String updated;
+    private LocalDateTime updated;
+
     @Getter
-    private String deleted;
+    private LocalDateTime deleted;
 
     public void beforeCreate() {
     }
@@ -38,22 +42,21 @@ public abstract class Entity {
     public void beforeDelete(boolean physicalDelete) {
     }
 
-
     final void updateCreated() {
 
         if (this.id == null || this.id.isBlank()) {
             this.id = UUID.randomUUID().toString();
         }
 
-        this.created = LocalDateTime.now().format(DTF);
+        this.created = LocalDateTime.now();
     }
 
     final void updateUpdated() {
-        this.updated = LocalDateTime.now().format(DTF);
+        this.updated = LocalDateTime.now();
     }
 
     final void updateDeleted() {
-        this.deleted = LocalDateTime.now().format(DTF);
+        this.deleted = LocalDateTime.now();
     }
 
     /**
@@ -81,11 +84,14 @@ public abstract class Entity {
                 continue;
             }
 
+            sb.append(", ").append(f.getName() ).append('=');
             try {
+
                 f.setAccessible(true);
-                sb.append( new StringBuilder().append( ", " ).append( f.getName() ).append('=').append( f.get( this ) ) );
+                sb.append(f.get( this ));
             } catch (IllegalAccessException e) {
                 // intended ignore
+                sb.append('?');
             }
         }
 

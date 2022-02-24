@@ -27,7 +27,7 @@ public class UserController {
     private final ValidationService validationService;
     private final UserCrudService userCrudService;
 
-    public UserController(@Autowired ValidationService validationService, @Autowired UserCrudService userCrudService) {
+    public UserController(ValidationService validationService, UserCrudService userCrudService) {
         this.validationService = validationService;
         this.userCrudService = userCrudService;
     }

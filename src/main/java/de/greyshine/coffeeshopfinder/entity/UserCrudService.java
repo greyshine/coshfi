@@ -37,23 +37,25 @@ public class UserCrudService extends JsonCrudService {
     private static final Map<String, UserInfo> activeUserMap = new HashMap<>();
     private static final int MAX_BAD_LOGINS = 6;
 
-    private final EmailService emailService;
+    //private final EmailService emailService;
     private final ValidationService validationService;
 
     private final long tokenInfoTimeToLive = 10 * 60 * 1000;
     private final Set<String> illegalNames = new HashSet<>();
     private boolean isTerminated = false;
 
-    public UserCrudService(@Autowired JsonService jsonService, @Autowired ValidationService validationService, @Autowired EmailService emailService) {
+    /**
+     * No Autowirded needed?
+     * @param jsonService
+     * @param validationService
+     */
+    public UserCrudService(@Autowired JsonService jsonService,
+                           @Autowired ValidationService validationService) {
 
         super(jsonService);
 
-        this.emailService = emailService;
+        //this.emailService = emailService;
         this.validationService = validationService;
-    }
-
-    public static Map<String, UserInfo> getTokenMap() {
-        return activeUserMap;
     }
 
     @PostConstruct
@@ -150,10 +152,10 @@ public class UserCrudService extends JsonCrudService {
         }
 
         for (String word : illegalNames) {
+
             word = word.strip();
-            if (word.isBlank() || word.charAt(0) == '#') {
-                continue;
-            } else if (login.indexOf(word) > -1) {
+
+            if (word.charAt(0) != '#' && login.indexOf(word) > -1) {
                 return false;
             }
         }
@@ -203,7 +205,7 @@ public class UserCrudService extends JsonCrudService {
 
     public String createConfirmationCode() {
 
-        final var sb = new StringBuffer();
+        final var sb = new StringBuilder();
 
         for (int i = 0, l = Utils.getRandom(3, 5); i < l; i++) {
             sb.append(Utils.getRandomLetter());
@@ -359,7 +361,8 @@ public class UserCrudService extends JsonCrudService {
                 params.put("confirmationcode", userEntity.getConfirmationCode());
                 params.put("link", "https://www.coffeeshopfinder.de/login?login=" +
                         Utils.getUrlencoded(userEntity.getLogin()) + "?cc=" + confirmationcode);
-                emailService.sendEmailByTemplate(userEntity.getEmail(), "confirmationcode", userEntity.getLanguage(), params, null, null);
+
+                //emailService.sendEmailByTemplate(userEntity.getEmail(), "confirmationcode", userEntity.getLanguage(), params, null, null);
 
             } catch (Exception e) {
                 log.error("{}", Utils.toString(e));
@@ -373,7 +376,7 @@ public class UserCrudService extends JsonCrudService {
 
         final long s = System.currentTimeMillis();
 
-        final var sb = new StringBuffer();
+        final var sb = new StringBuilder();
 
         for (byte b : login.getBytes(StandardCharsets.UTF_8)) {
             sb.append(b < 0 ? b * -1 : b);
@@ -415,13 +418,14 @@ public class UserCrudService extends JsonCrudService {
         private long lastAccess = System.currentTimeMillis();
 
         public UserInfo(String login, Set<String> rightsAndRoles) {
+
             this.login = login;
-            this.token = buildToken
-                    (login);
+            this.token = buildToken(login);
+
             rightsAndRoles.forEach(rrs::add);
         }
 
-        public boolean updateLastAccess() throws Exception {
+        public boolean updateLastAccess() {
 
             if (!isTokenTimeValid()) {
                 return false;

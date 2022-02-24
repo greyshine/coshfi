@@ -22,7 +22,7 @@ public class JsonCrudService {
         }
     };
 
-    private static final Map<Class, Object> LOCAL_SYNC_OBJECTS = new HashMap<>();
+    private static final Map<Class<?>, Object> LOCAL_SYNC_OBJECTS = new HashMap<>();
 
     private final JsonService jsonService;
 
@@ -222,9 +222,9 @@ public class JsonCrudService {
 
         notNull(supplier, "No supplier given.");
 
-        var syncObject = Sync.getDefault(sync).getSyncObject(clazz);
+        final var syncObject = Sync.getDefault(sync).getSyncObject(clazz);
 
-        if (Sync.NONE == syncObject) {
+        if (syncObject == null) {
             return supplier.get();
         } else {
             synchronized (syncObject) {
@@ -271,6 +271,12 @@ public class JsonCrudService {
             return this == Sync.LOCAL;
         }
 
+        /**
+         * NONE must never be returned!
+         *
+         * @param clazz
+         * @return
+         */
         public Object getSyncObject(Class<?> clazz) {
 
             if (this == NONE) {
@@ -278,7 +284,7 @@ public class JsonCrudService {
             } else if (this == GLOBAL) {
                 return SYNC_GLOBAL;
             } else if (clazz == null) {
-                log.warn("received no class on LOCAL sync, will use GLOBAL sync");
+                log.warn("received no class on LOCAL sync, will use GLOBAL sync instead!");
                 return SYNC_GLOBAL;
             }
 

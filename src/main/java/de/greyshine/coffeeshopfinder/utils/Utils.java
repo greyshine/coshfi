@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
@@ -24,6 +23,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.apache.commons.lang3.StringUtils.*;
+import static org.springframework.util.Assert.isTrue;
+import static org.springframework.util.Assert.notNull;
 
 @Slf4j
 public abstract class Utils {
@@ -50,9 +51,9 @@ public abstract class Utils {
 
     public static String getRandomLetters(int amountLetters) {
 
-        Assert.isTrue(amountLetters >= 0, "parameter must be >= 0");
+        isTrue(amountLetters >= 0, "parameter must be >= 0");
 
-        final var sb = new StringBuffer();
+        final var sb = new StringBuilder();
         for (int i = 0, l = amountLetters; i < l; i++) {
             sb.append(CC_CHARS[getRandom(0, CC_CHARS.length - 1)]);
         }
@@ -63,7 +64,7 @@ public abstract class Utils {
     @SneakyThrows
     public static String toHashSha256(String s) {
 
-        Assert.notNull(s, "value to be hashed must not be null");
+        notNull(s, "value to be hashed must not be null");
 
         s = s.length() + s;
 
@@ -81,7 +82,7 @@ public abstract class Utils {
     }
 
     public static String toHashPassword(String password) {
-        Assert.isTrue(isNotBlank(password), "value to be hashed must not be blank");
+        isTrue(isNotBlank(password), "value to be hashed must not be blank");
         password = password.length() + password + password.length();
         return toHashSha256(password);
     }
@@ -173,7 +174,7 @@ public abstract class Utils {
 
     public static String doIfNotBlank(String arg, Function<String, String> function) {
 
-        Assert.notNull(function, "");
+        notNull(function, "");
         return isBlank(arg) ? null : function.apply(arg);
     }
 
@@ -213,7 +214,7 @@ public abstract class Utils {
 
     public static Exception executeSafe(Runnable2 runnable) {
 
-        Assert.notNull(runnable, "Runnable must not be null");
+        notNull(runnable, "Runnable must not be null");
 
         try {
             runnable.run();
@@ -225,7 +226,7 @@ public abstract class Utils {
 
     public static <T> T executeSafe(Supplier2<T> supplier, T defaultValue) {
 
-        Assert.notNull(supplier, "Supplier must not be null");
+        notNull(supplier, "Supplier must not be null");
 
         try {
 
@@ -259,7 +260,7 @@ public abstract class Utils {
 
     public static boolean isOneOf(Object test, Object... testObjects) {
 
-        Assert.notNull(testObjects, "Objects to tests are null");
+        notNull(testObjects, "Objects to tests are null");
 
         for (Object object : testObjects) {
             if (isEquals(test, object, true)) {
@@ -320,7 +321,7 @@ public abstract class Utils {
 
     public static <T> T executeSynced(Object syncObject, Supplier2<T> supplier) throws Exception {
 
-        Assert.notNull(supplier, "Supplier must not be null");
+        notNull(supplier, "Supplier must not be null");
 
         synchronized (syncObject == null ? SYNC_OBJECT : syncObject) {
             return supplier.get();
@@ -329,7 +330,7 @@ public abstract class Utils {
 
     public static void executeSynced(Object syncObject, Runnable2 runnable) throws Exception {
 
-        Assert.notNull(runnable, "Runnable must not be null");
+        notNull(runnable, "Runnable must not be null");
 
         synchronized (syncObject == null ? SYNC_OBJECT : syncObject) {
             runnable.run();
@@ -380,7 +381,7 @@ public abstract class Utils {
     @SneakyThrows
     public static String toBase64(File file) {
 
-        Assert.isTrue(file != null && file.isFile() && file.canRead(),
+        isTrue(file != null && file.isFile() && file.canRead(),
                 "Cannot read file: " + (file == null ? null : file.getAbsolutePath()));
 
         // Taken from https://stackoverflow.com/a/58903654/845117
