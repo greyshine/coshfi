@@ -4,7 +4,7 @@
 
     <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <Pattern>%d{DD.MM.YYYY HH:mm:ss.SSS} %highlight(%-5level) %magenta(%logger{30}):%magenta(%line) %blue(-) %msg%n
+            <Pattern>%d{dd.MM.YYYY HH:mm:ss.SSS} %highlight(%-5level) %magenta(%logger{30}):%magenta(%line) %blue(-) %msg%n
             </Pattern>
         </encoder>
     </appender>

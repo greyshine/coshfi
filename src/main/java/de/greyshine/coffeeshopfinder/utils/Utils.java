@@ -54,7 +54,7 @@ public abstract class Utils {
         isTrue(amountLetters >= 0, "parameter must be >= 0");
 
         final var sb = new StringBuilder();
-        for (int i = 0, l = amountLetters; i < l; i++) {
+        for (int i = 0; i < amountLetters; i++) {
             sb.append(CC_CHARS[getRandom(0, CC_CHARS.length - 1)]);
         }
 
@@ -112,7 +112,7 @@ public abstract class Utils {
 
         if (log.isDebugEnabled()) {
             log.warn("{}; {} violations on {}:", info, violations.size(), object);
-            for (ConstraintViolation cv : violations) {
+            for (ConstraintViolation<?> cv : violations) {
                 log.warn("{}", cv);
             }
         }
@@ -348,6 +348,8 @@ public abstract class Utils {
 
     public static void sleep(long millisToWait, Stopper stopper) {
 
+        stopper = stopper != null ? stopper : ()->false;
+
         final var end = System.currentTimeMillis() + millisToWait;
 
         final var checktime = stopper == null ? 1000 : Math.max(stopper.checkInterval(), 1);
@@ -362,7 +364,7 @@ public abstract class Utils {
             }
 
             if (stopByStopper = stopper.isStop()) {
-                log.info("Stopped by Stopper actively waiting.");
+                log.debug("sleep stopped by Stopper actively waiting.");
                 break;
             }
 
@@ -448,6 +450,10 @@ public abstract class Utils {
             return 1_000;
         }
 
+        /**
+         *
+         * @param isStopped true if stopped by intention otherwise false
+         */
         default void finished(boolean isStopped) {
         }
     }
