@@ -4,7 +4,7 @@ import {BootstrapVue, IconsPlugin} from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import axios from "axios";
-import user from '@/assets/user';
+import user from '@/assets/js/user';
 
 import App from '@/App.vue'
 import Main from '@/components/Main.vue'

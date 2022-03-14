@@ -14,10 +14,11 @@
 
         <b-form-invalid-feedback :state="formSubmitSuccess" v-html="lang.get('form.login.fail')"/>
 
-        <b-form-group :label="lang.form.login.login"
+        <b-form-group :label="lang.get('form.login.login')"
                       :state="login_state"
                       label-for="login">
-          <b-form-input id="login" v-model="login" :placeholder="lang.form.login.login_placeholder" required trim/>
+          <b-form-input id="login" v-model="login" :placeholder="lang.get('form.login.login_placeholder')" required
+                        trim/>
         </b-form-group>
 
         <b-form-group :label="lang.form.login.password"
@@ -66,9 +67,9 @@
 
 <script>
 import axios from 'axios';
-import user from '@/assets/user.js';
-import utils from '@/assets/utils.js';
-import lang from '@/assets/lang.js';
+import user from '@/assets/js/user.js';
+import utils from '@/assets/js/utils.js';
+import lang from '@/assets/js/lang/lang.js';
 import Messages from '@/components/Messages.vue'
 import Vue from "vue";
 

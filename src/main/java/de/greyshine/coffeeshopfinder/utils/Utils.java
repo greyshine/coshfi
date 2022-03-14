@@ -369,14 +369,12 @@ public abstract class Utils {
             }
 
             try {
-                Thread.sleep(millisToWait);
+
+                Thread.currentThread().wait(millisToWait);
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-        }
-
-        if (stopper != null) {
-            stopper.finished(stopByStopper);
         }
     }
 
@@ -441,6 +439,9 @@ public abstract class Utils {
         }
     }
 
+    /**
+     * Interface to mark if a 'stop' should occur.
+     */
     @FunctionalInterface
     public interface Stopper {
 
@@ -448,13 +449,6 @@ public abstract class Utils {
 
         default long checkInterval() {
             return 1_000;
-        }
-
-        /**
-         *
-         * @param isStopped true if stopped by intention otherwise false
-         */
-        default void finished(boolean isStopped) {
         }
     }
 

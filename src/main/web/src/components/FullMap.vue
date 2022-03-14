@@ -12,7 +12,7 @@
 
 import OpenStreetMap from "@/components/OpenStreetMap";
 import axios from "axios";
-import utils from "@/assets/utils";
+import utils from "@/assets/js/utils";
 
 export default {
 

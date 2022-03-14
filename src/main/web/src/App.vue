@@ -22,7 +22,7 @@
 import axios from 'axios';
 import Burger from '@/components/Menu/Burger.vue';
 import Sidebar from '@/components/Menu/Sidebar.vue';
-import user from "@/assets/user";
+import user from "@/assets/js/user";
 
 export default {
 

@@ -8,7 +8,7 @@
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import utils from "@/assets/utils";
+import utils from "@/assets/js/utils";
 
 export default {
 

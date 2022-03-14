@@ -48,7 +48,7 @@
 
 <script>
 // import utils from "@/assets/utils";
-import user from "@/assets/user";
+import user from "@/assets/js/user";
 
 export default {
 

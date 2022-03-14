@@ -58,6 +58,8 @@ class User {
     load() {
 
         let item = localStorage.getItem('login');
+        //console.log('item', typeof item, item,  item==null, typeof item == 'undefined');
+        //item = typeof item == 'undefined' || item == null ? null : JSON.parse(item);
         item = item == null ? null : JSON.parse(item);
         console.log('localStorage load', item);
 

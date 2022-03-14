@@ -73,8 +73,8 @@
 
 <script>
 import axios from 'axios';
-import utils from '@/assets/utils.js';
-import lang from '@/assets/lang.js';
+import utils from '@/assets/js/utils.js';
+import lang from '@/assets/js/lang/lang.js';
 
 import Messages from '@/components/Messages.vue'
 

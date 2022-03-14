@@ -38,6 +38,14 @@ div {
   color: $colorSmall;
 }
 
+.alignRight {
+  text-align: right;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
 a {
   color: $colorLink;
   cursor: pointer;
@@ -68,11 +76,11 @@ textarea.error {
   border: 2px $colorError solid;
 }
 
-input.error::placeholder {
+textarea.error::placeholder {
   color: $colorError;
 }
 
-textarea.error::placeholder {
+input.error::placeholder {
   color: $colorError;
 }
 
