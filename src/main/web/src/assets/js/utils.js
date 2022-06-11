@@ -111,7 +111,7 @@ export default {
     },
 
     assertNotNull(value, message = null) {
-        if (value == null) {
+        if (typeof value == 'undefined' || value == null) {
             throw new Error(message == null ? 'value is null.' : message);
         }
     },
@@ -140,6 +140,31 @@ export default {
         }
     },
 
+    assertArray(value, message = null) {
+        if (!Array.isArray(value)) {
+            throw new Error(message == null ? 'value is not an array: ' + value : message);
+        }
+    },
+
+    trimStringArray(strings) {
+
+        this.assertArray(strings, "given parameter is no array");
+
+        let runLoop = true;
+
+        while (runLoop) {
+
+            runLoop = false;
+
+            for (let i = 0; i < strings.length; i++) {
+                if (typeof strings[i] == 'undefined' || strings[i] == null || strings[i].trim() === '') {
+                    runLoop = true;
+                    strings.splice(i, 1);
+                    break;
+                }
+            }
+        }
+    },
 
     AbstractWeedIcon: L.Icon.extend({
         options: {

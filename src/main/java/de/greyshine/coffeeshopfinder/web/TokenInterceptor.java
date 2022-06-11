@@ -1,11 +1,12 @@
 package de.greyshine.coffeeshopfinder.web;
 
-import de.greyshine.coffeeshopfinder.entity.UserCrudService;
+import de.greyshine.coffeeshopfinder.service.UserService;
 import de.greyshine.coffeeshopfinder.web.annotation.Tokenized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -23,18 +24,21 @@ import static org.apache.commons.lang3.StringUtils.trimToNull;
 public class TokenInterceptor implements HandlerInterceptor {
 
     private static final AtomicLong COUNT_REQUESTS = new AtomicLong(0);
-
-    @Autowired
-    private UserCrudService userService;
-
     private static final Map<Tokenized, Set<String>> tokenizedRights = new HashMap<>();
+    private final UserService userService;
+
+    public TokenInterceptor(@Autowired UserService userService) {
+        this.userService = userService;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
         final long requestCount = COUNT_REQUESTS.addAndGet(1);
 
-        log.debug("request {}; {}, handler={}", requestCount, handler.getClass().getCanonicalName(), handler);
+        if (!handler.toString().equals("de.greyshine.coffeeshopfinder.web.IndexController#ping(String)")) {
+            log.info("request {}; {}, handler={}", requestCount, handler.getClass().getCanonicalName(), handler);
+        }
 
         final var handlerMethod = handler instanceof HandlerMethod ? (HandlerMethod) handler : null;
 
@@ -63,7 +67,7 @@ public class TokenInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private boolean checkUserAllowed(Tokenized tokenized, UserCrudService.UserInfo userInfo) {
+    private boolean checkUserAllowed(Tokenized tokenized, UserService.UserInfo userInfo) {
 
         if (tokenized == null || tokenized.rrs().strip().isBlank()) {
             return true;
@@ -89,8 +93,12 @@ public class TokenInterceptor implements HandlerInterceptor {
             }
         }
 
-
         return false;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
+        userService.setCurrentToken(null);
     }
 
     private Set<String> getTokenizedRights(Tokenized tokenized) {
@@ -117,10 +125,12 @@ public class TokenInterceptor implements HandlerInterceptor {
         return rights;
     }
 
-    private void updateToken(Tokenized tokenized, String token) throws Exception {
+    private void updateToken(Tokenized tokenized, String token) {
+
+        userService.setCurrentToken(token);
 
         if (tokenized == null) {
-            // nothing to do
+            // nothing further to do
             return;
         }
 
@@ -131,5 +141,6 @@ public class TokenInterceptor implements HandlerInterceptor {
         }
 
         userInfo.get().updateLastAccess();
+
     }
 }

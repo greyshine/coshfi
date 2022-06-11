@@ -45,6 +45,23 @@ public abstract class Utils {
     private Utils() {
     }
 
+
+    public static String getRandom(final String chars, int len) {
+
+        isTrue(chars != null && chars.length() > 0, "Given parameter must be an array of minimal length of 1");
+        isTrue(len >= 0, "Length must be >= 0");
+
+        final var sb = new StringBuffer();
+        final var charsLength = chars.length() - 1;
+
+        while (len > 0) {
+            len--;
+            sb.append(chars.charAt(getRandom(0, charsLength)));
+        }
+
+        return sb.toString();
+    }
+
     public static char getRandomLetter() {
         return CC_CHARS[getRandom(0, CC_CHARS.length - 1)];
     }
@@ -165,11 +182,31 @@ public abstract class Utils {
     }
 
     public static <T> T getDefault(T object, Supplier<T> supplier) {
-        return object != null || supplier == null ? object : supplier.get();
+        return getDefault(object, null, supplier);
+    }
+
+    public static <T> T getDefault(T object, Function<T, T> function, Supplier<T> supplier) {
+
+        if (object == null) {
+            return supplier == null ? null : supplier.get();
+        }
+
+        return function == null ? object : function.apply(object);
     }
 
     public static String getDefaultString(String s, Supplier<String> supplier) {
-        return isNotBlank(s) ? s.strip() : supplier == null ? s : supplier.get();
+        return getDefaultString(s, null, supplier);
+    }
+
+    public static String getDefaultString(String s, Function<String, String> function, Supplier<String> supplier) {
+
+        s = trimToNull(s);
+
+        if (s == null) {
+            return supplier == null ? null : supplier.get();
+        }
+
+        return function == null ? s : function.apply(s);
     }
 
     public static String doIfNotBlank(String arg, Function<String, String> function) {

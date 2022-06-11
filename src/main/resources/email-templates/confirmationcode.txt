@@ -1,4 +1,4 @@
-Account confirmation code www.coffeshopfinder.de
+Account confirmation code - www.coffeshopfinder.de
 
 <h1>Hello ${name}</h1>
 

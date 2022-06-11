@@ -1,6 +1,7 @@
 $spaceSm: 5px;
 $space: 15px;
 $spaceLg: 30px;
+$fontSize: 1em;
 $fontSizeSmall: 0.6em;
 $colorFg: #A9D24E;
 $colorBg: #183100;
@@ -19,6 +20,7 @@ body {
   font-family: 'Lato';
   background-color: $colorBg;
   color: $colorFg;
+  font-size: $fontSize;
 }
 
 div {
@@ -65,7 +67,7 @@ textarea {
 }
 
 button {
-  margin: 0px $spaceSm $spaceSm;
+  margin: 5px $spaceSm $spaceSm;
 }
 
 input.error {
@@ -137,6 +139,29 @@ ul.hidden {
     list-style: none;
   }
 }
+
+div.modal-content {
+
+  font-size: $fontSize;
+
+  .modal-body {
+    background-color: white;
+    color: black;
+  }
+
+  .modal-title {
+    color: black;
+    font-size: $fontSize;
+  }
+
+  div {
+    background-color: white !important;
+    color: green !important;
+    border: 0;
+  }
+}
+
+
 
 
 

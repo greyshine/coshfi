@@ -70,11 +70,15 @@ public class JsonCrudService {
         notNull(item, "entity to update is null");
         isTrue(jsonService.isExistingDir(item.getClass()), "no existing directory for item: " + item);
 
+        log.debug("updating {}", item);
+
         executeSynced(sync, item.getClass(), () -> {
 
             item.beforeUpdate();
             item.updateUpdated();
+
             jsonService.save(item, true);
+
             return item;
         });
     }

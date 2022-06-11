@@ -14,6 +14,14 @@ let active = 'en';
  */
 let lang = {
 
+    getLanguages() {
+        return Object.keys(languages);
+    },
+
+    getLanguage() {
+        return active;
+    },
+
     set(language) {
 
         if (typeof languages[language] == 'undefined') {

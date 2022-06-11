@@ -1,6 +1,6 @@
 package de.greyshine.coffeeshopfinder.web;
 
-import de.greyshine.coffeeshopfinder.entity.UserCrudService;
+import de.greyshine.coffeeshopfinder.service.UserService;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Slf4j
 public class IndexController {
 
-    private final UserCrudService userCrudService;
+    private final UserService userService;
 
     private AtomicLong pingCalls = new AtomicLong(0);
 
@@ -44,8 +44,8 @@ public class IndexController {
     private String sslForFreeName;
     private String sslForFreeContent;
 
-    public IndexController(@Autowired UserCrudService userCrudService) {
-        this.userCrudService = userCrudService;
+    public IndexController(@Autowired UserService userService) {
+        this.userService = userService;
     }
 
     @PostConstruct
@@ -92,7 +92,7 @@ public class IndexController {
         pingCalls.addAndGet(1L);
 
         if (token != null) {
-            return userCrudService.updateUserInfo(token);
+            return userService.updateUserInfo(token);
         }
 
         return true;

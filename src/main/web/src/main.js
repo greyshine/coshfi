@@ -57,12 +57,9 @@ new Vue({
 
 axios.interceptors.request.use(function (config) {
 
+  //console.log('axios.interceptors.request.headers.TOKEN', user.token);
   config.headers.TOKEN = user.token == null ? '' : user.token;
   //console.log('config.headers.TOKEN', typeof config.headers.TOKEN, config.headers.TOKEN);
 
   return config;
 });
-
-
-
-

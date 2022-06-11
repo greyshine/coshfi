@@ -6,7 +6,6 @@ import de.greyshine.coffeeshopfinder.service.EmailService;
 import de.greyshine.json.crud.JsonCrudService.Sync;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -120,9 +119,13 @@ public class CoffeeShopFinder implements ApplicationListener<ApplicationReadyEve
         user.setLogin("test");
         user.setPassword("Test_123"); // wird im create gehashed
 
-        user.setName("Test");
+        user.setName("Test Tester Company");
+        user.setContactPerson("Testy Testyify");
         user.setEmail("coffeeshopfinder@web.de");
-        user.setAddress("Teststr. 1; D-55555 City");
+        user.setPhone("+1 234 456-7890");
+        user.addAddressLines("Teststraße 1", " D-55555 City");
+
+        user.setLanguage("en");
 
         userCrudService.create(user);
 

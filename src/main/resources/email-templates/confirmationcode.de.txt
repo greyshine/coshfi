@@ -1,4 +1,4 @@
-Konto Bestätigung for www.coffeshopfinder.de
+Konto Bestätigung - www.coffeshopfinder.de
 
 <h1>Hallo ${name}</h1>
 

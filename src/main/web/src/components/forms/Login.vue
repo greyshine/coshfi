@@ -12,7 +12,10 @@
 
       <b-form id="form" @keyup.13="!isSubmitDisabled && submitLogin()">
 
-        <b-form-invalid-feedback :state="formSubmitSuccess" v-html="lang.get('form.login.fail')"/>
+        <b-form-invalid-feedback :state="formSubmitSuccess">
+          <span v-if="confirmationcode==null" v-html="lang.get('form.login.fail_global')"/>
+          <span v-else v-html="lang.get('form.login.fail_confirmationcode')"/>
+        </b-form-invalid-feedback>
 
         <b-form-group :label="lang.get('form.login.login')"
                       :state="login_state"
@@ -31,9 +34,11 @@
 
         <b-form-group v-if="confirmationcode != null"
                       :label="lang.form.login.confirmationcode"
+                      :description="lang.form.login.confirmationcode_description"
                       label-for="confirmationcode">
           <b-form-input id="confirmationcode" v-model="confirmationcode"
-                        :placeholder="lang.form.login.confirmationcode_placeholder" trim/>
+                        :placeholder="lang.form.login.confirmationcode_placeholder"
+                        trim/>
         </b-form-group>
 
         <b-button :disabled="isSubmitDisabled" size="sm" @click="submitLogin">Login</b-button>
@@ -182,9 +187,13 @@ export default {
 
                   this.formSubmitSuccess = false;
 
-                  this.password = '';
-                  this.email = '';
+                  if ('CONFIRMATION_CODE' == error.response.data) {
+                    this.confirmationcode = '';
+                  } else {
+                    this.password = '';
+                  }
 
+                  this.email = '';
                   this.$user.clear();
 
                 } else {
@@ -208,7 +217,7 @@ export default {
 
                 this.showLogin = true;
 
-                this.$eventbus.$emit('messages', 'add', 'FRANZ!');
+                this.$eventbus.$emit('messages', 'add', lang.form.login.global.confirmationcode_resent);
 
               },
               error => {

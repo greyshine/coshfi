@@ -4,7 +4,10 @@ import de.greyshine.coffeeshopfinder.EmailConfiguration;
 import de.greyshine.coffeeshopfinder.entity.EmailEntity;
 import de.greyshine.coffeeshopfinder.utils.Utils;
 import de.greyshine.json.crud.JsonCrudService;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,21 +101,23 @@ public class EmailService {
                                     Set<Attachment> attachments,
                                     Set<InlineContent> inlineContents) {
 
+        isTrue(isNotBlank(receiverEmail), "Receiver email must not be blank!");
         isTrue(isNotBlank(filenamePrefix), "No filenamePrefix defined");
 
         params = params != null ? params : Collections.emptyMap();
         inlineContents = inlineContents != null ? inlineContents : Collections.emptySet();
 
         var filename = filenamePrefix + (lang == null ? "" : "." + lang) + ".txt";
-        var templateFile = new File(emailConfiguration.getTemplateDir(), filename);
+        var templateFile = new File(emailConfiguration.getTemplateDir(), filename).getAbsoluteFile();
 
         if (!templateFile.exists() && lang != null) {
+            log.warn("file {} with lang={} does not exist. Using default", templateFile, lang);
             filename = filenamePrefix + ".txt";
             templateFile = new File(emailConfiguration.getTemplateDir(), filename);
         }
 
         templateFile = Utils.getFile(templateFile);
-        isTrue(templateFile.isFile(), "The file seems not to exist: " + templateFile);
+        isTrue(templateFile.isFile(), "The file does not to exist: " + templateFile);
 
         final var content = Files.readString(templateFile.toPath(), StandardCharsets.UTF_8);//Utils.readString(templateFile);
 

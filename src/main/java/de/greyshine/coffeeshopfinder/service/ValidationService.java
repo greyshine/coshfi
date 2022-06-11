@@ -20,7 +20,7 @@ public class ValidationService {
     public static final String PASSWORD_CRITERIA_MATCH = "password.bad_format";
 
     public static final Pattern PASSWORD_PATTERN_NUMBER = Pattern.compile(".*[0-9].*");
-    public static final Pattern PASSWORD_PATTERN_SPECIALCHARACTER = Pattern.compile(".*[!\"§\\$%&/()=?+*#'<>,;.:\\-_@\\[\\|].*");
+    public static final Pattern PASSWORD_PATTERN_SPECIALCHARACTER = Pattern.compile(".*[!\"§\\$%&/()=?+*#'<>,;.:\\-_@\\[\\]\\|].*");
 
     public static final String LOGIN_BLANK = "login.blank";
     public static final Pattern LOGIN_PATTERN = Pattern.compile("[\\p{L}\\p{M}\\p{N}][\\p{L}\\p{M}\\p{N}-_+*]{0,23}[\\p{L})\\p{M}\\p{N}]");

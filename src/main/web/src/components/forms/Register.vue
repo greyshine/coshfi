@@ -30,19 +30,16 @@
                     :label="lang.form.register.password"
                     :state="password_state"
                     label-for="password">
-        <b-form-input id="password" v-model="password" :placeholder="lang.form.register.password_placeholder" trim/>
-        <!--
-        <b-form-text id="password-help-block">
-          Your password must be 8-20 characters long, contain letters and numbers, and must not
-          contain spaces, special characters, or emoji.
-        </b-form-text>-->
+        <b-form-input id="password" v-model="password" :placeholder="lang.form.register.password_placeholder" trim
+                      type="password"/>
       </b-form-group>
 
       <b-form-group :invalid-feedback="lang.form.register.password2_error"
                     :label="lang.form.register.password2"
                     :state="password2_state"
                     label-for="password2">
-        <b-form-input id="password2" v-model="password2" :placeholder="lang.form.register.password2_placeholder" trim/>
+        <b-form-input id="password2" v-model="password2" :placeholder="lang.form.register.password2_placeholder" trim
+                      type="password"/>
       </b-form-group>
 
       <b-form-group :description="lang.form.register.email_description"

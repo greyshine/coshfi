@@ -13,6 +13,7 @@ public class LoginException extends RuntimeException {
     }
 
     public LoginException(String login, String info) {
+        super(info);
         this.login = login;
         this.info = info;
     }

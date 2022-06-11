@@ -47,18 +47,18 @@ export default {
       this.login = null;
       this.$router.push('/login');
     });
+
+    this.login = this.$user.login;
   },
 
   mounted() {
 
-    this.login = this.$user.login;
-
     axios.get('/info')
         .then(
             response => {
-              //console.log('server.info', response.data);
               this.$info = response.data;
               this.$eventbus.$emit('info', response.data);
+              //console.log('server.info', response.data);
             },
             error => {
               console.log('error', error);
